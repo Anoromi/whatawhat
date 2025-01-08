@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 cfg-if = "1.0.0"
+clap = { version = "4.5.24", features = ["derive"] }
 
 [dependencies.windows]
 version = "0.58.0"
@@ -14,4 +15,8 @@ features = [
     "Win32_Security",
     "Win32_System_Threading",
     "Win32_UI_WindowsAndMessaging",
+    "Win32_System_ProcessStatus",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Accessibility"
+
 ]
