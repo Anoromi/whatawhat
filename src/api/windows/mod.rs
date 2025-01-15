@@ -6,13 +6,13 @@ use std::mem::transmute;
 use windows::Win32::{
     Foundation::*,
     System::{
-        ProcessStatus::{GetModuleBaseNameW, GetModuleFileNameExW},
+        ProcessStatus::GetModuleBaseNameW,
         Threading::{
-            OpenProcess, QueryFullProcessImageNameW, PROCESS_ACCESS_RIGHTS, PROCESS_NAME_WIN32,
+            OpenProcess,
             PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
         },
     },
-    UI::{Input::KeyboardAndMouse::GetActiveWindow, WindowsAndMessaging::*},
+    UI::WindowsAndMessaging::*,
 };
 
 // #[cfg(windows)]

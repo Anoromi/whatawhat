@@ -1,19 +1,21 @@
 use std::{env, path::PathBuf};
 
 use sysinfo::{get_current_pid, System};
-use windows::Win32::System::Threading::CREATE_BREAKAWAY_FROM_JOB;
+use windows::Win32::System::Threading::CREATE_NEW_CONSOLE;
+
+use crate::cli::termination::gracefuly_terminate;
 
 pub fn kill_previous_servers(name: &PathBuf) {
     let system = System::new_all();
+    let current_id = get_current_pid().unwrap();
     for (pid, process) in system.processes().iter() {
-        println!("Process {:?}", process.exe());
-        let this_pid = get_current_pid().unwrap();
-        println!("This id {:?}", this_pid);
-        println!("This id {:?}", process);
-        if *pid == this_pid {
+        // println!("Process {:?}", process.exe());
+        // println!("This id {:?}", this_pid);
+        // println!("This id {:?}", process);
+        if *pid == current_id {
             continue;
         }
-        if matches!(process.parent(), Some(p) if p == this_pid) {
+        if matches!(process.parent(), Some(p) if p == current_id) {
             continue;
         }
 
@@ -24,7 +26,12 @@ pub fn kill_previous_servers(name: &PathBuf) {
             .is_some()
         {
             println!("It happened");
-            process.kill();
+            gracefuly_terminate(pid.as_u32());
+            println!("Waiting to die");
+
+            // TODO Gracefuly kill
+            // process.kill_with(Signal::Term);
+            // process.kill();
             process.wait();
         }
     }
@@ -32,25 +39,27 @@ pub fn kill_previous_servers(name: &PathBuf) {
 
 pub fn restart_server() {
     let process_name = env::current_exe().unwrap();
-    kill_previous_servers(&process_name);
+    // kill_previous_servers(&process_name);
     let mut command = std::process::Command::new(process_name);
-    command.args(["run"]);
+    command.args(["serve", "hello"]);
 
     #[cfg(windows)]
     {
-        
         use std::os::windows::process::CommandExt;
-        command.creation_flags(CREATE_BREAKAWAY_FROM_JOB.0);
+        
+        command.creation_flags(CREATE_NEW_CONSOLE.0);
+
     }
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
         command.process_group(0);
+        
     }
 
-    // .process_group(0)
-    // .stdout(Stdio::null())
-    // .spawn()
-    // .unwrap()
-    // .wait();
+    println!("Spawning");
+    #[allow(clippy::zombie_processes)]
+    let ch = command.spawn().unwrap();
+
+    
 }

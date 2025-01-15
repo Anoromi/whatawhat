@@ -1,14 +1,35 @@
-use std::{thread::sleep, time::Duration};
+use std::{
+    thread::sleep,
+    time::{Duration, Instant, UNIX_EPOCH},
+};
 
-use cfg_if::cfg_if;
+use anyhow::Result;
 use cli::run_cli;
+use windows::Win32::Foundation::BOOL;
 
 pub mod api;
-pub mod data_collection;
 pub mod cli;
+pub mod data_collection;
+pub mod server;
 
-fn main() {
-    run_cli();
+#[tokio::main]
+async fn main() -> Result<()> {
+    // unsafe {
+    // let thread_id = GetCurrentThreadId();
+    // dbg!(GetConsoleWindow());
+    // SetWindowsHookExW(WH_CALLWNDPROC, Some(test_process), None, thread_id).unwrap();
+    // SetConsoleCtrlHandler(Some(test2), true).unwrap();
+    // }
+    // print_endlessly();
+
+    // get_active();
+    // run_cli().await?;
+    Ok(())
+}
+
+pub unsafe extern "system" fn test2(ctrltype: u32) -> BOOL {
+    println!("received something {}", ctrltype);
+    true.into()
 }
 
 fn get_active() {
