@@ -1,6 +1,8 @@
 use anyhow::Result;
 use std::rc::Rc;
 
+use crate::data_collection::get_active;
+
 struct WindowData {
     window_name: Rc<str>,
     process_name: Rc<str>,
@@ -14,6 +16,6 @@ pub struct GenericCollector {}
 
 impl Collector for GenericCollector {
     fn get_active_window_data() -> Result<WindowData> {
-        todo!()
+        get_active()
     }
 }
