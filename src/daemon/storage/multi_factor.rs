@@ -10,7 +10,7 @@ use tokio::{io::{
     AsyncReadExt, AsyncSeekExt, AsyncWriteExt,
 }, sync::Mutex};
 
-use super::universal_reader_writer::UniversalReaderWriter;
+use super::types::AsyncReadWrite;
 
 pub trait Repository<T> {
     fn get_all(&self) -> impl std::future::Future<Output = Result<Vec<T>>>;
@@ -28,7 +28,7 @@ struct InternalStorage<T, R> {
     file_handle: R,
 }
 
-impl<T: Serialize + DeserializeOwned + Clone, R: UniversalReaderWriter> InternalStorage<T, R> {
+impl<T: Serialize + DeserializeOwned + Clone, R: AsyncReadWrite> InternalStorage<T, R> {
     async fn read_value(&mut self) -> Result<T> {
         let mut buf = Vec::with_capacity(1024);
         self.file_handle.read_to_end(&mut buf).await?;
@@ -50,7 +50,7 @@ pub struct SafeRepositoryImpl<T, R> {
 
 
 #[allow(clippy::await_holding_lock)]
-impl<T: Serialize + DeserializeOwned + Clone, R: UniversalReaderWriter> Repository<T>
+impl<T: Serialize + DeserializeOwned + Clone, R: AsyncReadWrite> Repository<T>
     for SafeRepositoryImpl<T, R>
 {
     async fn get_all(&self) -> Result<Vec<T>> {

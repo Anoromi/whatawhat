@@ -1,4 +1,3 @@
-use std::future;
 
 use anyhow::Result;
 use listener::receive_interprocess_messages;
@@ -6,7 +5,7 @@ use tokio::select;
 
 pub mod listener;
 
-pub const UPDATE_CHANNEL_NAME: &str = "PROCESS_DETECTOR_NOTIFICATION.sock";
+pub const DAEMON_CHANNEL_NAME: &str = "PROCESS_DETECTOR_NOTIFICATION.sock";
 
 async fn detect_messages() -> Result<()> {
     let hehe = select! {

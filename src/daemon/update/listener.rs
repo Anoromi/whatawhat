@@ -1,13 +1,16 @@
+use std::time::Duration;
+
 use anyhow::Result;
 use interprocess::local_socket::{
     traits::tokio::Listener, GenericNamespaced, ListenerOptions, ToNsName,
 };
-use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::{io::{AsyncBufReadExt, BufReader}, time::sleep};
 
-use crate::server::update::UPDATE_CHANNEL_NAME;
+use crate::daemon::update::DAEMON_CHANNEL_NAME;
+
 
 pub async fn receive_interprocess_messages() -> Result<()> {
-    let name = UPDATE_CHANNEL_NAME.to_ns_name::<GenericNamespaced>()?;
+    let name = DAEMON_CHANNEL_NAME.to_ns_name::<GenericNamespaced>()?;
     let listener = ListenerOptions::new().name(name).create_tokio()?;
     let mut buffer = String::with_capacity(1024);
 
@@ -55,6 +58,6 @@ pub async fn receive_interprocess_messages() -> Result<()> {
     loop {
         // unsafe { FreeConsole().unwrap() };
         println!("Hello there");
-        sleep(Duration::from_millis(1000));
+        sleep(Duration::from_millis(1000)).await;
     }
 }

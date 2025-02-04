@@ -1,4 +1,8 @@
-use std::fmt::{Debug, Display};
+use std::{
+    fmt::{Debug, Display},
+    thread::sleep,
+    time::Duration,
+};
 
 use anyhow::Result;
 use windows::Win32::{
@@ -7,7 +11,10 @@ use windows::Win32::{
         OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_INFORMATION,
         PROCESS_VM_READ,
     },
-    UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowTextW, GetWindowThreadProcessId},
+    UI::{
+        Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO},
+        WindowsAndMessaging::{GetForegroundWindow, GetWindowTextW, GetWindowThreadProcessId},
+    },
 };
 
 use super::ActiveWindowData;
@@ -71,4 +78,13 @@ unsafe fn get_window_process_path(window_handle: HANDLE, text: &mut [u16]) -> Re
 unsafe fn get_window_title(window_handle: HWND, text: &mut [u16]) -> String {
     let len = unsafe { GetWindowTextW(window_handle, text) };
     String::from_utf16_lossy(&text[..len as usize])
+}
+
+pub fn is_afk() {
+    let mut last: LASTINPUTINFO = LASTINPUTINFO::default();
+    let is_success = unsafe { GetLastInputInfo(&mut last) };
+    loop {
+        println!("{} {}", is_success.0 != 0, last.dwTime);
+        sleep(Duration::from_secs(5));
+    }
 }
