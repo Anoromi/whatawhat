@@ -28,6 +28,7 @@ features = [
     "Win32_System_ProcessStatus",
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_Accessibility",
-    "Win32_System_Console"
+    "Win32_System_Console",
+    "Win32_System_SystemInformation"
 
 ]

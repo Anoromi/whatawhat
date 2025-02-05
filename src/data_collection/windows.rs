@@ -7,9 +7,12 @@ use std::{
 use anyhow::Result;
 use windows::Win32::{
     Foundation::{CloseHandle, BOOL, HANDLE, HWND},
-    System::Threading::{
-        OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_INFORMATION,
-        PROCESS_VM_READ,
+    System::{
+        SystemInformation::{GetTickCount, GetTickCount64},
+        Threading::{
+            OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_INFORMATION,
+            PROCESS_VM_READ,
+        },
     },
     UI::{
         Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO},
@@ -80,11 +83,21 @@ unsafe fn get_window_title(window_handle: HWND, text: &mut [u16]) -> String {
     String::from_utf16_lossy(&text[..len as usize])
 }
 
-pub fn is_afk() {
-    let mut last: LASTINPUTINFO = LASTINPUTINFO::default();
-    let is_success = unsafe { GetLastInputInfo(&mut last) };
+pub fn is_afk() -> u64 {
     loop {
-        println!("{} {}", is_success.0 != 0, last.dwTime);
-        sleep(Duration::from_secs(5));
+        let mut last: LASTINPUTINFO = LASTINPUTINFO {
+            cbSize: size_of::<LASTINPUTINFO>() as u32,
+            dwTime: 0,
+        };
+        let is_success = unsafe { GetLastInputInfo(&mut last) };
+        let tick_count = unsafe { GetTickCount64() };
+        println!(
+            "{} {} {} {}",
+            is_success.0 != 0,
+            tick_count,
+            last.dwTime,
+            (tick_count - last.dwTime as u64) / 1000
+        );
+        sleep(Duration::from_millis(500));
     }
 }
