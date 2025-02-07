@@ -1,9 +1,6 @@
 use std::{env, path::PathBuf};
 
 use sysinfo::{get_current_pid, System};
-use windows::Win32::System::Threading::CREATE_NEW_CONSOLE;
-
-use crate::cli::termination::gracefuly_terminate;
 
 pub fn kill_previous_servers(name: &PathBuf) {
     let system = System::new_all();
@@ -26,7 +23,7 @@ pub fn kill_previous_servers(name: &PathBuf) {
             .is_some()
         {
             println!("It happened");
-            gracefuly_terminate(pid.as_u32());
+            // gracefuly_terminate(pid.as_u32());
             println!("Waiting to die");
 
             // TODO Gracefuly kill

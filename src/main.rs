@@ -1,13 +1,14 @@
+use std::{thread::sleep, time::Duration};
 
 use anyhow::Result;
 use cli::run_cli;
-use data_collection::windows::is_afk;
+use data_collection::get_active;
 use env_logger::Target;
 
 pub mod api;
 pub mod cli;
-pub mod data_collection;
 pub mod daemon;
+pub mod data_collection;
 pub mod utils;
 
 #[tokio::main]
@@ -20,10 +21,14 @@ async fn main() -> Result<()> {
     // }
     // print_endlessly();
 
-    // get_active();
     loop {
-        is_afk();
+        let _ = dbg!(get_active());
+        sleep(Duration::from_secs(1));
     }
+    // get_active();
+    // loop {
+    //     is_afk();
+    // }
     // enable_logging();
     // run_cli().await?;
     Ok(())
