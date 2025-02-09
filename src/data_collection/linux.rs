@@ -3,7 +3,9 @@ use std::ptr::null;
 use anyhow::Result;
 use xcb::{
     screensaver::{QueryInfo, QueryInfoReply},
-    x::{GetProperty, InternAtom, InternAtomCookie, Window, ATOM_WINDOW},
+    x::{
+        GetInputFocus, GetProperty, InputFocus, InternAtom, InternAtomCookie, Window, ATOM_WINDOW,
+    },
     Xid,
 };
 // use x11::xlib::XOpenDisplay;
@@ -31,9 +33,10 @@ pub fn get_active() -> Result<ActiveWindowData> {
     let (conn, screen_num) = xcb::Connection::connect(None)?;
     let setup = conn.get_setup();
     let k = setup.roots().collect::<Vec<_>>();
-    
+
+    let focus_reply = conn.wait_for_reply(conn.send_request(&GetInputFocus {}))?;
     dbg!(&k.len());
-    let root = k[0].root();
+    let root = focus_reply.focus();
     let active_window_cookie = conn.send_request(&InternAtom {
         only_if_exists: false,
         name: b"_NET_ACTIVE_WINDOW",
