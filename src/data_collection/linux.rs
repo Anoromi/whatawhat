@@ -84,7 +84,7 @@ pub fn get_pid(conn: &Connection, window: Window) -> Result<()> {
         long_offset: 0,
         long_length: 1,
     }))?;
-    println!("{}", result.value::<u32>()[0]);
+    println!("{:?}", result.value::<u32>());
     Ok(())
 }
 
