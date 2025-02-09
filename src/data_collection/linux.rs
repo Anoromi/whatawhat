@@ -4,9 +4,9 @@ use anyhow::Result;
 use xcb::{
     screensaver::{QueryInfo, QueryInfoReply},
     x::{
-        GetInputFocus, GetProperty, InputFocus, InternAtom, InternAtomCookie, Window, ATOM_WINDOW,
+        GetInputFocus, GetProperty, GrabServer, InputFocus, InternAtom, InternAtomCookie, QueryTree, UngrabServer, Window, ATOM_WINDOW
     },
-    Xid,
+    Connection, Xid,
 };
 // use x11::xlib::XOpenDisplay;
 
@@ -29,41 +29,54 @@ use super::ActiveWindowData;
 //
 // }
 
-pub fn get_active() -> Result<ActiveWindowData> {
-    let (conn, screen_num) = xcb::Connection::connect(None)?;
+pub fn grab(conn: &Connection) -> Result<()> {
+    Ok(())
+}
+
+pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
     let setup = conn.get_setup();
     let k = setup.roots().collect::<Vec<_>>();
 
     let focus_reply = conn.wait_for_reply(conn.send_request(&GetInputFocus {}))?;
     dbg!(&k.len());
-    let root = focus_reply.focus();
-    let active_window_cookie = conn.send_request(&InternAtom {
-        only_if_exists: false,
-        name: b"_NET_ACTIVE_WINDOW",
-    });
-    let active_window_reply = conn.wait_for_reply(active_window_cookie)?.atom();
-    let property_cookie = conn.send_request(&GetProperty {
-        delete: false,
-        window: root,
-        property: active_window_reply,
-        r#type: ATOM_WINDOW,
-        long_offset: 0,
-        long_length: 1,
-    });
-    let property = conn.wait_for_reply(property_cookie)?;
-    dbg!(property.value::<Window>());
-    // println!("{:?}", k.root());
+    let mut wnd = focus_reply.focus();
 
+    loop {
+        let tree = conn.wait_for_reply(conn.send_request(&QueryTree {
+            window: wnd,
+        }))?;
+        if wnd == tree.root() || tree.parent() == tree.root() {
+            dbg!(wnd);
+            break;
+        }
+        else {
+            wnd = tree.parent();
+        }
+        
+
+
+
+    }
+
+    dbg!(&wnd);
     let hehe = conn.send_request(&QueryInfo {
-        drawable: xcb::x::Drawable::Window(root),
+        drawable: xcb::x::Drawable::Window(wnd),
     });
     let reply: QueryInfoReply = conn.wait_for_reply(hehe)?;
     dbg!(reply.ms_since_user_input());
-
     Ok(ActiveWindowData {
         title: "".into(),
         process_name: "".into(),
     })
+}
+
+pub fn get_active() -> Result<ActiveWindowData> {
+    let (conn, screen_num) = xcb::Connection::connect(None)?;
+    let _ = conn.send_request(&GrabServer {});
+
+    let result = get_active_internal(&conn);
+    let _ = conn.send_request(&UngrabServer {});
+    result
 }
 
 pub fn is_afk() -> Result<()> {
