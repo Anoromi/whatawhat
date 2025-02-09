@@ -68,11 +68,24 @@ use super::ActiveWindowData;
 // }
 
 pub fn get_pid_atom(conn: &Connection) -> Result<Atom> {
-    let hehe = conn.wait_for_reply(conn.send_request(&InternAtom {
+    let reply = conn.wait_for_reply(conn.send_request(&InternAtom {
         only_if_exists: false,
         name: b"_NET_WM_PID",
     }))?;
-    Ok(hehe.atom())
+    Ok(reply.atom())
+}
+
+pub fn get_pid(conn: &Connection, window: Window) -> Result<()> {
+    let result = conn.wait_for_reply(conn.send_request(&GetProperty {
+        delete: false,
+        window,
+        property: get_pid_atom(conn)?,
+        r#type: ATOM_WINDOW,
+        long_offset: 0,
+        long_length: 1,
+    }))?;
+    println!("{}", result.value::<u32>()[0]);
+    Ok(())
 }
 
 pub fn get_active_window_atom(conn: &Connection) -> Result<Atom> {
@@ -91,18 +104,6 @@ fn get_active_window(conn: &Connection, window: Window) -> Result<Window> {
         r#type: ATOM_WINDOW,
         long_offset: 0,
         long_length: 1,
-        // display,
-        // root,
-        // property,
-        // 0,              //no offset
-        // 1,              //one Window
-        // False,
-        // XA_WINDOW,
-        // &type_return,   //should be XA_WINDOW
-        // &format_return, //should be 32
-        // &nitems_return, //should be 1 (zero if there is no such window)
-        // &bytes_left,    //should be 0 (i'm not sure but should be atomic read)
-        // &data           //should be non-null
     }))?;
     Ok(result.value::<Window>()[0])
 }
@@ -145,19 +146,22 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
         } else {
             wnd = tree.parent();
             get_name(conn, wnd)?;
+            get_pid(conn, wnd)?;
         }
     }
 
     // dbg!(&wnd);
 
     // let wnd = get_active_window(conn, wnd)?;
+
+    get_pid(conn, wnd)?;
     let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
         delete: false,
         window: wnd,
         property: x::ATOM_WM_NAME,
         r#type: x::ATOM_ANY,
         long_offset: 0,
-        long_length: 0,
+        long_length: 1024,
     }))?;
     let title = String::from_utf8(wm_name.value().to_vec())
         .expect("The WM_NAME property is not valid UTF-8");
