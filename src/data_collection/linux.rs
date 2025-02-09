@@ -4,8 +4,7 @@ use anyhow::Result;
 use xcb::{
     screensaver::{QueryInfo, QueryInfoReply},
     x::{
-        self, Atom, GetInputFocus, GetProperty, GrabServer, InputFocus, InternAtom,
-        InternAtomCookie, QueryTree, UngrabServer, Window, ATOM_WINDOW,
+        self, Atom, GetInputFocus, GetProperty, GrabServer, InputFocus, InternAtom, InternAtomCookie, QueryTree, UngrabServer, Window, ATOM_ANY, ATOM_WINDOW
     },
     Connection, Xid,
 };
@@ -80,9 +79,9 @@ pub fn get_pid(conn: &Connection, window: Window) -> Result<()> {
         delete: false,
         window,
         property: get_pid_atom(conn)?,
-        r#type: ATOM_WINDOW,
+        r#type: ATOM_ANY,
         long_offset: 0,
-        long_length: 1,
+        long_length: 2,
     }))?;
     println!("pid {:?}", result.value::<u32>());
     Ok(())
