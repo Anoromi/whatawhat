@@ -32,7 +32,7 @@ pub fn get_active() -> Result<ActiveWindowData> {
     let setup = conn.get_setup();
     let k = setup.roots().collect::<Vec<_>>();
     
-    dbg!(&k);
+    dbg!(&k.len());
     let root = k[0].root();
     let active_window_cookie = conn.send_request(&InternAtom {
         only_if_exists: false,
