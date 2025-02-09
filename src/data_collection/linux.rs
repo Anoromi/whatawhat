@@ -136,6 +136,7 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
     let mut wnd = focus_reply.focus();
 
     get_name(conn, wnd)?;
+    get_pid(conn, wnd)?;
     loop {
         let tree = conn.wait_for_reply(conn.send_request(&QueryTree { window: wnd }))?;
 
