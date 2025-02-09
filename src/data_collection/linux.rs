@@ -166,7 +166,8 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
     let title = String::from_utf8(wm_name.value().to_vec())
         .expect("The WM_NAME property is not valid UTF-8");
 
-    dbg!(&title);
+    println!("Final title is {}", title);
+    get_pid(conn, wnd)?;
 
     let hehe = conn.send_request(&QueryInfo {
         drawable: xcb::x::Drawable::Window(wnd),
