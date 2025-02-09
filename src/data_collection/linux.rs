@@ -51,7 +51,7 @@ pub fn get_active() -> Result<ActiveWindowData> {
         long_length: 1,
     });
     let property = conn.wait_for_reply(property_cookie)?;
-    dbg!(property);
+    dbg!(property.value::<Window>());
     // println!("{:?}", k.root());
 
     let hehe = conn.send_request(&QueryInfo {
