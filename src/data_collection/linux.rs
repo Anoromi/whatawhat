@@ -114,7 +114,7 @@ pub fn get_name(conn: &Connection, window: Window) -> Result<()> {
         property: x::ATOM_WM_NAME,
         r#type: x::ATOM_ANY,
         long_offset: 0,
-        long_length: 0,
+        long_length: 1024,
     }))?;
     let title = String::from_utf8(wm_name.value().to_vec())
         .expect("The WM_NAME property is not valid UTF-8");
