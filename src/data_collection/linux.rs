@@ -107,6 +107,21 @@ fn get_active_window(conn: &Connection, window: Window) -> Result<Window> {
     Ok(result.value::<Window>()[0])
 }
 
+pub fn get_name(conn: &Connection, window: Window) -> Result<()> {
+    let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
+        delete: false,
+        window,
+        property: x::ATOM_WM_NAME,
+        r#type: x::ATOM_ANY,
+        long_offset: 0,
+        long_length: 0,
+    }))?;
+    let title = String::from_utf8(wm_name.value().to_vec())
+        .expect("The WM_NAME property is not valid UTF-8");
+    println!("{title}");
+    Ok(())
+}
+
 pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
     let setup = conn.get_setup();
     let k = setup.roots().collect::<Vec<_>>();
@@ -120,16 +135,19 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
     dbg!(&k.len());
     let mut wnd = focus_reply.focus();
 
-    // loop {
-    //     let tree = conn.wait_for_reply(conn.send_request(&QueryTree { window: wnd }))?;
-    //     if wnd == tree.root() || tree.parent() == tree.root() {
-    //         dbg!(wnd);
-    //         break;
-    //     } else {
-    //         wnd = tree.parent();
-    //     }
-    // }
-    //
+    get_name(conn, wnd)?;
+    loop {
+        let tree = conn.wait_for_reply(conn.send_request(&QueryTree { window: wnd }))?;
+
+        if wnd == tree.root() || tree.parent() == tree.root() {
+            dbg!(wnd);
+            break;
+        } else {
+            wnd = tree.parent();
+            get_name(conn, wnd)?;
+        }
+    }
+
     // dbg!(&wnd);
 
     let wnd = get_active_window(conn, wnd)?;
