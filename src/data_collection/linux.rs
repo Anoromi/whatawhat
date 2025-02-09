@@ -95,11 +95,12 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
 
     dbg!(&wnd);
 
+    
     let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
         delete: false,
         window: wnd,
         property: x::ATOM_WM_NAME,
-        r#type: x::ATOM_STRING,
+        r#type: x::ATOM_ANY,
         long_offset: 0,
         long_length: 0,
     }))?;
