@@ -16,15 +16,15 @@ use super::ActiveWindowData;
 //     let k = setup.roots().next().unwrap();
 //     let wnd = k.root();
 //     println!("{:?}", k.root());
-//     
+//
 //     let hehe = conn.send_request(&QueryInfo {
 //         drawable: xcb::x::Drawable::Window(wnd),
 //     });
 //     let reply: QueryInfoReply = conn.wait_for_reply(hehe)?;
 //     dbg!(reply.ms_since_user_input());
-//     
+//
 //     todo!()
-//     
+//
 // }
 
 pub fn get_active() -> Result<ActiveWindowData> {
@@ -43,20 +43,22 @@ pub fn get_active() -> Result<ActiveWindowData> {
         property: active_window_reply,
         r#type: ATOM_WINDOW,
         long_offset: 0,
-        long_length: 1
+        long_length: 1,
     });
     let property = conn.wait_for_reply(property_cookie)?;
     dbg!(property);
     println!("{:?}", k.root());
-    
+
     let hehe = conn.send_request(&QueryInfo {
         drawable: xcb::x::Drawable::Window(root),
     });
     let reply: QueryInfoReply = conn.wait_for_reply(hehe)?;
     dbg!(reply.ms_since_user_input());
-    
-    todo!()
-    
+
+    Ok(ActiveWindowData {
+        title: "".into(),
+        process_name: "".into(),
+    })
 }
 
 pub fn is_afk() -> Result<()> {
