@@ -118,7 +118,7 @@ pub fn get_name(conn: &Connection, window: Window) -> Result<()> {
     }))?;
     let title = String::from_utf8(wm_name.value().to_vec())
         .expect("The WM_NAME property is not valid UTF-8");
-    println!("{title}");
+    dbg!(title);
     Ok(())
 }
 
@@ -150,7 +150,7 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
 
     // dbg!(&wnd);
 
-    let wnd = get_active_window(conn, wnd)?;
+    // let wnd = get_active_window(conn, wnd)?;
     let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
         delete: false,
         window: wnd,
