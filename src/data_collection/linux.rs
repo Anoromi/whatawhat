@@ -30,8 +30,9 @@ use super::ActiveWindowData;
 pub fn get_active() -> Result<ActiveWindowData> {
     let (conn, screen_num) = xcb::Connection::connect(None)?;
     let setup = conn.get_setup();
-    let k = setup.roots().next().unwrap();
-    let root = k.root();
+    let k = setup.roots().collect::<Vec<_>>();
+    
+    let root = k[0].root();
     let active_window_cookie = conn.send_request(&InternAtom {
         only_if_exists: false,
         name: b"_NET_ACTIVE_WINDOW",
@@ -47,7 +48,7 @@ pub fn get_active() -> Result<ActiveWindowData> {
     });
     let property = conn.wait_for_reply(property_cookie)?;
     dbg!(property);
-    println!("{:?}", k.root());
+    // println!("{:?}", k.root());
 
     let hehe = conn.send_request(&QueryInfo {
         drawable: xcb::x::Drawable::Window(root),
