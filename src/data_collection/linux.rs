@@ -95,7 +95,7 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
 
     dbg!(&wnd);
 
-    let cookie = conn.wait_for_reply(conn.send_request(&x::GetProperty {
+    let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
         delete: false,
         window: wnd,
         property: x::ATOM_WM_NAME,
@@ -103,8 +103,9 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
         long_offset: 0,
         long_length: 0,
     }))?;
+    let title = String::from_utf8(wm_name.value().to_vec()).expect("The WM_NAME property is not valid UTF-8");
 
-    dbg!(&cookie);
+    dbg!(&title);
 
     let hehe = conn.send_request(&QueryInfo {
         drawable: xcb::x::Drawable::Window(wnd),
