@@ -43,20 +43,17 @@ pub fn restart_server() {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
-        
-        command.creation_flags(CREATE_NEW_CONSOLE.0);
+        use windows::Win32::System::Threading::CREATE_NEW_CONSOLE;
 
+        command.creation_flags(CREATE_NEW_CONSOLE.0);
     }
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
         command.process_group(0);
-        
     }
 
     println!("Spawning");
     #[allow(clippy::zombie_processes)]
     let ch = command.spawn().unwrap();
-
-    
 }

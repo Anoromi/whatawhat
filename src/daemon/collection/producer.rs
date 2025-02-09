@@ -24,5 +24,15 @@ impl WindowDataProvider for GenericWindowDataProducer {
 }
 
 pub trait AfkProvider {
-    fn is_afk(&self) -> Result<WindowData>;
+    fn is_afk(&self) -> Result<bool>;
+}
+
+pub struct GenericAfkProvider {
+    
+}
+
+impl AfkProvider for GenericAfkProvider {
+    fn is_afk(&self) -> Result<bool> {
+        todo!()
+    }
 }
