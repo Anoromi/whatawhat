@@ -177,26 +177,26 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
 
     // let wnd = get_active_window(conn, wnd)?;
 
-    dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
-    let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
-        delete: false,
-        window: wnd,
-        property: x::ATOM_WM_NAME,
-        r#type: x::ATOM_ANY,
-        long_offset: 0,
-        long_length: 1024,
-    }))?;
-    let title = String::from_utf8(wm_name.value().to_vec())
-        .expect("The WM_NAME property is not valid UTF-8");
-
-    println!("Final title is {}", title);
-    get_pid(conn, wnd)?;
-
-    let hehe = conn.send_request(&QueryInfo {
-        drawable: xcb::x::Drawable::Window(wnd),
-    });
-    let reply: QueryInfoReply = conn.wait_for_reply(hehe)?;
-    dbg!(reply.ms_since_user_input());
+    // dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
+    // let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
+    //     delete: false,
+    //     window: wnd,
+    //     property: x::ATOM_WM_NAME,
+    //     r#type: x::ATOM_ANY,
+    //     long_offset: 0,
+    //     long_length: 1024,
+    // }))?;
+    // let title = String::from_utf8(wm_name.value().to_vec())
+    //     .expect("The WM_NAME property is not valid UTF-8");
+    //
+    // println!("Final title is {}", title);
+    // get_pid(conn, wnd)?;
+    //
+    // let hehe = conn.send_request(&QueryInfo {
+    //     drawable: xcb::x::Drawable::Window(wnd),
+    // });
+    // let reply: QueryInfoReply = conn.wait_for_reply(hehe)?;
+    // dbg!(reply.ms_since_user_input());
     Ok(ActiveWindowData {
         title: "".into(),
         process_name: "".into(),
