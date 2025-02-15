@@ -153,7 +153,11 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
     dbg!(&k.len());
     let mut wnd = focus_reply.focus();
 
-    dbg!(k.into_iter().map(|v| get_active_window(conn, v.root())).collect::<Vec<_>>());
+    dbg!(k
+        .into_iter()
+        .map(|v| get_active_window(conn, v.root()))
+        .map(|v| v.and_then(|v| get_name(conn, v)))
+        .collect::<Vec<_>>());
     // get_name(conn, wnd)?;
     // dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
     // loop {
