@@ -118,7 +118,7 @@ fn get_active_window(conn: &Connection, window: Window) -> Result<Window> {
         delete: false,
         window,
         property: get_active_window_atom(conn)?,
-        r#type: ATOM_WINDOW,
+        r#type: ATOM_ANY,
         long_offset: 0,
         long_length: 1,
     }))?;
@@ -153,20 +153,21 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
     dbg!(&k.len());
     let mut wnd = focus_reply.focus();
 
-    get_name(conn, wnd)?;
-    dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
-    loop {
-        let tree = conn.wait_for_reply(conn.send_request(&QueryTree { window: wnd }))?;
-
-        if wnd == tree.root() || tree.parent() == tree.root() {
-            dbg!(wnd);
-            break;
-        } else {
-            wnd = tree.parent();
-            get_name(conn, wnd)?;
-            dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
-        }
-    }
+    dbg!(k.into_iter().map(|v| get_active_window(conn, v.root())).collect::<Vec<_>>());
+    // get_name(conn, wnd)?;
+    // dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
+    // loop {
+    //     let tree = conn.wait_for_reply(conn.send_request(&QueryTree { window: wnd }))?;
+    //
+    //     if wnd == tree.root() || tree.parent() == tree.root() {
+    //         dbg!(wnd);
+    //         break;
+    //     } else {
+    //         wnd = tree.parent();
+    //         get_name(conn, wnd)?;
+    //         dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
+    //     }
+    // }
 
     // dbg!(&wnd);
 
