@@ -149,9 +149,9 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
         k.iter().map(|v| v.root().resource_id()).collect::<Vec<_>>()
     );
 
-    let focus_reply = conn.wait_for_reply(conn.send_request(&GetInputFocus {}))?;
-    dbg!(&k.len());
-    let mut wnd = focus_reply.focus();
+    // let focus_reply = conn.wait_for_reply(conn.send_request(&GetInputFocus {}))?;
+    // dbg!(&k.len());
+    // let mut wnd = focus_reply.focus();
 
     dbg!(k
         .into_iter()
