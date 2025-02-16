@@ -125,11 +125,19 @@ fn get_active_window(conn: &Connection, window: Window) -> Result<Window> {
     Ok(result.value::<Window>()[0])
 }
 
+fn get_net_wm_name_atom(conn: &Connection) -> Result<Atom> {
+    let response = conn.wait_for_reply(conn.send_request(&InternAtom {
+        only_if_exists: false,
+        name: b"_NET_WM_NAME",
+    }))?;
+    Ok(response.atom())
+}
+
 pub fn get_name(conn: &Connection, window: Window) -> Result<String> {
     let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
         delete: false,
         window,
-        property: x::ATOM_WM_NAME,
+        property: get_net_wm_name_atom(conn)?,
         r#type: x::ATOM_ANY,
         long_offset: 0,
         long_length: 1024,
@@ -211,6 +219,8 @@ pub fn get_active() -> Result<ActiveWindowData> {
     let _ = conn.send_request(&UngrabServer {});
     result
 }
+
+// fn get_ms_since_user_input()
 
 pub fn is_afk() -> Result<()> {
     let (conn, screen_num) = xcb::Connection::connect(None)?;
