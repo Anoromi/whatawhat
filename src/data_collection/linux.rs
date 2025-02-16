@@ -113,10 +113,10 @@ pub fn get_active_window_atom(conn: &Connection) -> Result<Atom> {
     Ok(hehe.atom())
 }
 
-fn get_active_window(conn: &Connection, window: Window) -> Result<Window> {
+fn get_active_window(conn: &Connection, root: &Window) -> Result<Window> {
     let result = conn.wait_for_reply(conn.send_request(&GetProperty {
         delete: false,
-        window,
+        window: *root,
         property: get_active_window_atom(conn)?,
         r#type: ATOM_ANY,
         long_offset: 0,
@@ -150,24 +150,26 @@ pub fn get_name(conn: &Connection, window: Window) -> Result<String> {
 
 pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
     let setup = conn.get_setup();
-    let k = setup.roots().collect::<Vec<_>>();
 
-    println!(
-        "{:?}",
-        k.iter().map(|v| v.root().resource_id()).collect::<Vec<_>>()
-    );
+    // Currently the application only supports 1 x11 screen. 
+    let default_window = setup.roots().next().unwrap().root();
+    // let k = setup.roots().collect::<Vec<_>>();
 
-    // let focus_reply = conn.wait_for_reply(conn.send_request(&GetInputFocus {}))?;
-    // dbg!(&k.len());
-    // let mut wnd = focus_reply.focus();
-
-    dbg!(k
-        .into_iter()
-        .map(|v| get_active_window(conn, v.root()))
-        .map(|v| v.and_then(|v| get_name(conn, v)))
-        .collect::<Vec<_>>());
-
-    dbg!(get_active_window(conn, Window::none()).and_then(|v| get_name(conn, v))?);
+    // println!(
+    //     "{:?}",
+    //     k.iter().map(|v| v.root().resource_id()).collect::<Vec<_>>()
+    // );
+    let active_window = get_active_window(conn, &default_window)?;
+    let window_name = get_name(conn, active_window)?;
+    let process = get_pid(conn, active_window)?.unwrap();
+    let process_name = get_process_name(process)?;
+    dbg!(window_name);
+    dbg!(process_name);
+    // dbg!(k
+    //     .into_iter()
+    //     .map(|v| get_active_window(conn, v.root()))
+    //     .map(|v| v.and_then(|v| get_name(conn, v)))
+    //     .collect::<Vec<_>>());
     // get_name(conn, wnd)?;
     // dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
     // loop {
