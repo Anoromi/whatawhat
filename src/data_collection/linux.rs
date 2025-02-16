@@ -166,6 +166,8 @@ pub fn get_active_internal(conn: &Connection) -> Result<ActiveWindowData> {
         .map(|v| get_active_window(conn, v.root()))
         .map(|v| v.and_then(|v| get_name(conn, v)))
         .collect::<Vec<_>>());
+
+    dbg!(get_active_window(conn, Window::none()).and_then(|v| get_name(conn, v))?);
     // get_name(conn, wnd)?;
     // dbg!(get_pid(conn, wnd)?.map(get_process_name).transpose()?);
     // loop {
