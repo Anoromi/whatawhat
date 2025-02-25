@@ -49,7 +49,6 @@ pub struct SafeRepositoryImpl<T, R> {
 }
 
 
-#[allow(clippy::await_holding_lock)]
 impl<T: Serialize + DeserializeOwned + Clone, R: AsyncReadWrite> Repository<T>
     for SafeRepositoryImpl<T, R>
 {

@@ -12,12 +12,14 @@ pub mod update;
 
 const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(5);
 
-pub async fn start_server() -> Result<()> {
+pub async fn start_daemon() -> Result<()> {
     let (sender, receiver) = broadcast::channel::<WindowData>(10);
     // let collector = DataCollectorImpl::new(next, producer, collect_frequency)
     // let processing: ProcessingService<RecordEventDto> = todo!();
     // let service_execution = tokio::join![processing.start()];
     // service_execution.0?;
+
+    update::detect_messages().await;
 
     Ok(())
 }

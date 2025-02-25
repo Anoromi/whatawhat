@@ -1,18 +1,20 @@
-use std::{thread::sleep, time::Duration};
+use std::{env, fs::File, path::PathBuf, thread::sleep, time::Duration};
 
 use anyhow::Result;
 use cli::run_cli;
-use data_collection::get_active;
-use env_logger::Target;
+use tracing_subscriber::fmt::writer::MakeWriterExt;
+use windows_api::{GenericWindowManager, WindowManager};
 
 pub mod api;
 pub mod cli;
 pub mod daemon;
-pub mod data_collection;
+pub mod fs;
 pub mod utils;
+pub mod windows_api;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    env::set_var("RUST_BACKTRACE", "full");
     // unsafe {
     // let thread_id = GetCurrentThreadId();
     // dbg!(GetConsoleWindow());
@@ -21,21 +23,48 @@ async fn main() -> Result<()> {
     // }
     // print_endlessly();
 
-    loop {
-        let _ = dbg!(get_active());
-        sleep(Duration::from_secs(1));
-    }
+    // loop {
+    //     let _ = dbg!(GenericWindowManager::new()?.get_active_window_data());
+    //     sleep(Duration::from_secs(1));
+    // }
     // get_active();
     // loop {
     //     is_afk();
     // }
     // enable_logging();
-    // run_cli().await?;
+    // tracing_subscriber::FmtSubscriber::
+    // let appender = tracing_appender::rolling::daily(get_app_dir()?.join("logs"), "myapp-logs");
+    // let (non_blocking_appender, _guard) = tracing_appender::non_blocking(appender);
+    //
+    // let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
+    //
+    // tracing_subscriber::fmt()
+    //     .with_writer(stdout.and(non_blocking_appender))
+    //     .init();
+    enable_logging()?;
+
+    run_cli().await?;
     Ok(())
 }
 
-fn enable_logging() {
-    let mut builder = env_logger::Builder::from_default_env();
-    builder.target(Target::Stdout);
-    builder.init();
+fn enable_logging() -> Result<()> {
+    let appender = tracing_appender::rolling::daily(get_app_dir()?.join("logs"), "app");
+
+    let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
+
+    tracing_subscriber::fmt()
+        .with_writer(stdout.and(appender))
+        .pretty()
+        .init();
+    Ok(())
+}
+
+fn init_application_directory() {}
+
+fn get_app_dir() -> Result<PathBuf> {
+    Ok(std::env::current_dir()?.join("data"))
+    // #[cfg(windows)]
+    // std::fs::create_dir("%APPDATA%")
+    // #[cfg(target_os = linux)]
+    // std::fs::create_dir("~/.local/share/")
 }

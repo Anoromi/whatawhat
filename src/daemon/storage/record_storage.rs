@@ -4,8 +4,7 @@ use anyhow::Result;
 use chrono::NaiveDate;
 
 use super::{
-    application_storage::{UsageIntervalEntity, UsageRecordEntity},
-    record_event::Color,
+    entities::{UsageIntervalEntity, UsageRecordEntity}, record_event::Color
 };
 
 pub trait RecordStorage {
@@ -33,16 +32,11 @@ pub trait IndexStorage {
 }
 
 pub trait RecordFileHandle {
-    fn append(&self, usage_record: UsageRecordEntity) -> impl Future<Output = Result<()>>;
+    fn append(&mut self, usage_records: Vec<UsageRecordEntity>) -> impl Future<Output = Result<()>>;
     fn get_date(&self) -> NaiveDate;
 }
 
 pub trait ColorIndexStorage {
     fn add_element(&self, key: &str, value: Color) -> impl Future<Output = Result<()>>;
-
-
     fn finalize(&self) -> impl Future<Output = Result<()>> ;
-    
-
-
 }

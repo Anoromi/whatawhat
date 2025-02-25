@@ -1,14 +1,10 @@
-use std::{
-    fmt::{Debug, Display},
-    thread::sleep,
-    time::Duration,
-};
+use std::fmt::{Debug, Display};
 
 use anyhow::Result;
 use windows::Win32::{
     Foundation::{CloseHandle, BOOL, HANDLE, HWND},
     System::{
-        SystemInformation::{GetTickCount, GetTickCount64},
+        SystemInformation::GetTickCount64,
         Threading::{
             OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_INFORMATION,
             PROCESS_VM_READ,
@@ -20,7 +16,7 @@ use windows::Win32::{
     },
 };
 
-use super::ActiveWindowData;
+use super::{ActiveWindowData, WindowManager};
 
 #[derive(Debug)]
 struct ActiveWindowError {}
@@ -63,11 +59,11 @@ pub fn get_active() -> Result<ActiveWindowData> {
 
     Ok(ActiveWindowData {
         process_name: process_name.into(),
-        title: title.into(),
+        window_title: title.into(),
     })
 }
 
-unsafe fn get_window_process_path(window_handle: HANDLE, text: &mut [u16]) -> Result<String> {
+unsafe fn get_window_process_path(window_handle: HANDLE, text: &mut [u16]) -> Result<String> { unsafe {
     let mut length = text.len() as u32;
     QueryFullProcessImageNameW(
         window_handle,
@@ -76,28 +72,55 @@ unsafe fn get_window_process_path(window_handle: HANDLE, text: &mut [u16]) -> Re
         &mut length,
     )?;
     Ok(String::from_utf16_lossy(&text[..length as usize]))
-}
+}}
 
 unsafe fn get_window_title(window_handle: HWND, text: &mut [u16]) -> String {
     let len = unsafe { GetWindowTextW(window_handle, text) };
     String::from_utf16_lossy(&text[..len as usize])
 }
 
-pub fn is_afk() -> u64 {
-    loop {
-        let mut last: LASTINPUTINFO = LASTINPUTINFO {
-            cbSize: size_of::<LASTINPUTINFO>() as u32,
-            dwTime: 0,
-        };
-        let is_success = unsafe { GetLastInputInfo(&mut last) };
-        let tick_count = unsafe { GetTickCount64() };
-        println!(
-            "{} {} {} {}",
-            is_success.0 != 0,
-            tick_count,
-            last.dwTime,
-            (tick_count - last.dwTime as u64) / 1000
-        );
-        sleep(Duration::from_millis(500));
+pub fn get_idle_time() -> u32 {
+    let mut last: LASTINPUTINFO = LASTINPUTINFO {
+        cbSize: size_of::<LASTINPUTINFO>() as u32,
+        dwTime: 0,
+    };
+    let is_success = unsafe { GetLastInputInfo(&mut last) };
+    let tick_count = unsafe { GetTickCount64() };
+    println!(
+        "{} {} {} {}",
+        is_success.0 != 0,
+        tick_count,
+        last.dwTime,
+        (tick_count - last.dwTime as u64) / 1000
+    );
+    let duration = tick_count - last.dwTime as u64;
+    if duration > u32::MAX as u64 {
+        u32::MAX
+    } else {
+        duration as u32
+    }
+}
+
+pub struct WindowsWindowManager {}
+
+impl WindowsWindowManager {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for WindowsWindowManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl WindowManager for WindowsWindowManager {
+    fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
+        get_active()
+    }
+
+    fn get_idle_time(&mut self) -> Result<u32> {
+        Ok(get_idle_time())
     }
 }

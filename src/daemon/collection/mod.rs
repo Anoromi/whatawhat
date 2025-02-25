@@ -1,10 +1,9 @@
 pub mod producer;
 pub mod collector;
+pub mod afk;
 
 use std::sync::mpsc::Sender;
 
-use anyhow::Result;
-use producer::WindowDataProvider;
 
 use super::storage::record_event::Record;
 
@@ -26,6 +25,6 @@ struct CollectionModule<Wpd, Ap> {
     sender: Sender<Record>
 }
 
-impl<Wpd: WindowDataProvider, Ap> CollectionModule<Wpd, Ap> {}
+// impl<Wpd: WindowDataProvider, Ap> CollectionModule<Wpd, Ap> {}
 
 

@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::{
     daemon::storage::{
-        application_storage::UsageRecordEntity,
+        entities::UsageRecordEntity,
         record_storage::{ColorIndexStorage, RecordFileHandle, RecordStorage},
     },
     utils::time::get_current_time,
@@ -10,13 +10,13 @@ use crate::{
 
 use super::module::EventProcessor;
 
-pub struct DataSaver<R: RecordStorage, Cs> {
+pub struct LocalSaverProcessor<R: RecordStorage, Cs> {
     records_storage: R,
     current_handle: Option<R::RecordFile>,
     color_storage: Cs,
 }
 
-impl<R: RecordStorage, Cs> DataSaver<R, Cs> {
+impl<R: RecordStorage, Cs> LocalSaverProcessor<R, Cs> {
     async fn move_file_handle(&mut self) -> Result<R::RecordFile> {
         let current_file = self.current_handle.take();
         let now = get_current_time().date_naive();
@@ -30,12 +30,12 @@ impl<R: RecordStorage, Cs> DataSaver<R, Cs> {
     }
 }
 
-impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for DataSaver<R, Cs> {
+impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalSaverProcessor<R, Cs> {
     async fn process_next(
         &mut self,
         message: crate::daemon::storage::record_event::Record,
     ) -> anyhow::Result<()> {
-        let active_file = self.move_file_handle().await?;
+        let mut active_file = self.move_file_handle().await?;
 
         if let Some(color) = message.color {
             self.color_storage
@@ -44,12 +44,12 @@ impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for DataSaver<R, Cs
         }
 
         active_file
-            .append(UsageRecordEntity {
+            .append(vec![UsageRecordEntity {
                 window_name: message.window_name,
                 process_name: message.process_name,
                 moment: message.timestamp,
                 afk: message.afk,
-            })
+            }])
             .await?;
 
         Ok(())

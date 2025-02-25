@@ -1,4 +1,5 @@
 use std::{
+    collections::VecDeque,
     io::{Cursor, ErrorKind},
     path::Path,
     sync::Arc,
@@ -6,57 +7,34 @@ use std::{
 };
 
 use anyhow::Result;
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use tokio::{
     fs::{self, File},
-    io::AsyncWriteExt,
+    io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt},
 };
 
-use crate::utils::retry::run_with_retry;
+use crate::{fs::operations::seek_line_backwards, utils::retry::run_with_retry};
 
-use super::record_storage::{RecordFileHandle, RecordStorage};
+use super::{
+    entities::{UsageIntervalEntity, UsageRecordEntity},
+    record_storage::{RecordFileHandle, RecordStorage},
+};
 
 pub trait CompactFileHandle {
     fn get_items() -> Vec<UsageIntervalEntity>;
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize, Clone)]
-pub struct UsageIntervalEntity {
-    pub window_name: Arc<str>,
-    pub process_name: Arc<str>,
-    pub start: DateTime<Utc>,
-    pub end: DateTime<Utc>,
-    pub afk: bool,
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize, Clone)]
-pub struct UsageRecordEntity {
-    pub window_name: Arc<str>,
-    pub process_name: Arc<str>,
-    pub moment: DateTime<Utc>,
-    pub afk: bool,
-}
-
 struct ApplicationStorageImpl {
-    record_dir: Box<Path>
-
+    record_dir: Box<Path>,
 }
 
 impl RecordStorage for ApplicationStorageImpl {
-    type RecordFile = RecordHandle;
+    type RecordFile = UsageIntervalRecordFile;
 
+    /// this is intended for future use to potentially compact local data
     async fn compact_files(&self) -> Result<()> {
-        let mut entries = fs::read_dir(self.record_dir.clone()).await?;
-        while let Some(file) = entries.next_entry().await? {
-            if !file.file_type().await?.is_file() {
-                continue;
-            }
-
-
-        }
-
-        todo!()
+        unimplemented!("Api isn't ready")
     }
 
     async fn create_or_append_record(&self, date: chrono::NaiveDate) -> Result<Self::RecordFile> {
@@ -68,7 +46,7 @@ impl RecordStorage for ApplicationStorageImpl {
     }
 }
 
-struct RecordHandle {
+struct UsageIntervalRecordFile {
     file_path: Box<Path>,
     date: NaiveDate,
 }
@@ -77,16 +55,16 @@ trait GetItems<T> {
     async fn get_all(&self) -> Result<Vec<T>>;
 }
 
-impl GetItems<UsageRecordEntity> for RecordHandle {
+impl GetItems<UsageRecordEntity> for UsageIntervalRecordFile {
     async fn get_all(&self) -> Result<Vec<UsageRecordEntity>> {
         run_with_retry(10, Duration::from_millis(100), || self.get_all_inner()).await
     }
 }
 
-impl RecordFileHandle for RecordHandle {
-    async fn append(&self, usage_record: UsageRecordEntity) -> Result<()> {
-        run_with_retry(10, Duration::from_millis(100), move || {
-            self.append_inner(usage_record.clone())
+impl RecordFileHandle for UsageIntervalRecordFile {
+    async fn append(&mut self, usage_record: Vec<UsageRecordEntity>) -> Result<()> {
+        run_with_retry(10, Duration::from_millis(100), async || {
+            self.append_inner(usage_record.clone()).await
         })
         .await
     }
@@ -96,7 +74,7 @@ impl RecordFileHandle for RecordHandle {
     }
 }
 
-impl RecordHandle {
+impl UsageIntervalRecordFile {
     async fn get_all_inner(&self) -> Result<Vec<UsageRecordEntity>> {
         match fs::read_to_string(&self.file_path).await {
             Ok(s) => Ok(csv::Reader::from_reader(s.as_bytes())
@@ -107,23 +85,74 @@ impl RecordHandle {
                 if e.kind() == ErrorKind::NotFound {
                     Ok(vec![])
                 } else {
-                    return Err(e)?;
+                    Err(e)?
                 }
             }
         }
     }
 
-    async fn append_inner(&self, usage_record: UsageRecordEntity) -> Result<()> {
+    async fn extract_line_backwards(file: &mut File) -> Result<String, anyhow::Error> {
+        seek_line_backwards(file, &mut vec![0; 1024]).await?;
+        let mut last_line = String::new();
+        file.read_to_string(&mut last_line).await?;
+        Ok(last_line)
+    }
+
+    async fn append_inner(&mut self, usage_record: Vec<UsageRecordEntity>) -> Result<()> {
         let mut file = File::options()
+            .write(true)
             .create(true)
             .append(true)
+            .read(true)
             .open(&self.file_path)
             .await?;
-        let mut writer = csv::Writer::from_writer(vec![]);
-        writer.serialize(usage_record)?;
-        let mut buffer = writer.into_inner()?;
-        file.write_all_buf(&mut Cursor::new(buffer.as_mut_slice()));
+
+        let mut usage_record = VecDeque::from(usage_record);
+
+        file.seek(std::io::SeekFrom::End(0));
+
+        let mut last_line = Self::extract_line_backwards(&mut file).await?;
+        if last_line.is_empty() {
+            todo!()
+            // return Ok(())
+        } else {
+            let reader = csv::Reader::from_reader(Cursor::new(last_line.into_bytes()));
+            // let value = reader.deserialize::<UsageIntervalEntity>().next().unwrap()?;
+            // usage_record.push_back(value);
+        }
+
+        // usage_record
+
+        // let mut writer = csv::Writer::from_writer(vec![]);
+        // writer.serialize(usage_record)?;
+        // let mut buffer = writer.into_inner()?;
+        // seek_line_backwards(file, buffer)
+        // seek_line_backwards(buffer, buffer)
+        // file.write_all_buf(&mut Cursor::new(buffer.as_mut_slice()))
+        //     .await?;
         drop(file);
         Ok(())
     }
+}
+
+fn collapse_records(
+    usage_records: impl IntoIterator<Item = UsageRecordEntity>,
+) -> Vec<UsageIntervalEntity> {
+    let mut intervals = Vec::<UsageIntervalEntity>::new();
+    for record in usage_records {
+        match intervals.last_mut() {
+            Some(interval)
+                if interval.window_name == record.window_name
+                    && interval.process_name == record.process_name
+                    && interval.afk == record.afk =>
+            {
+                interval.end = record.moment
+            }
+            Some(_) | None => {
+                intervals.push(record.into());
+            }
+        }
+    }
+
+    intervals
 }
