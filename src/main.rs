@@ -2,6 +2,7 @@ use std::{env, fs::File, path::PathBuf, thread::sleep, time::Duration};
 
 use anyhow::Result;
 use cli::run_cli;
+use tracing::error;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 use windows_api::{GenericWindowManager, WindowManager};
 
@@ -43,7 +44,9 @@ async fn main() -> Result<()> {
     //     .init();
     enable_logging()?;
 
-    run_cli().await?;
+    run_cli().await.inspect_err(|e| {
+        error!("{e:?}");
+    })?;
     Ok(())
 }
 
