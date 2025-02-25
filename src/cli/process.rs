@@ -42,7 +42,7 @@ pub fn kill_previous_servers(name: &Path) {
 
 pub fn restart_server() {
     let process_name = env::current_exe().unwrap();
-    kill_previous_servers(&process_name);
+    // kill_previous_servers(&process_name);
     let mut command = std::process::Command::new(process_name);
     command.args(["serve", "hello"]);
 
