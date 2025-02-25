@@ -1,4 +1,4 @@
-use std::u32;
+use std::{thread::sleep, time::Duration, u32};
 
 use anyhow::Result;
 use tracing::info;
@@ -35,7 +35,9 @@ pub fn gracefuly_terminate(uid: u32) -> Result<()> {
             // unsafe { .unwrap() };
             unsafe { SetConsoleCtrlHandler(None, true) }?;
             const CTRL_C_EVENT: u32 = 0;
-            unsafe { GenerateConsoleCtrlEvent(CTRL_C_EVENT, process_id) }?;
+            unsafe { GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0) }?;
+
+            sleep(Duration::from_millis(2000));
 
             unsafe { SetConsoleCtrlHandler(None, false) }?;
         }
