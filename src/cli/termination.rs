@@ -33,11 +33,11 @@ pub fn gracefuly_terminate(uid: u32) -> Result<()> {
             // info!("Steady 2");
 
             // unsafe { .unwrap() };
-            unsafe { SetConsoleCtrlHandler(None, true).unwrap() };
+            unsafe { SetConsoleCtrlHandler(None, true) }?;
             const CTRL_C_EVENT: u32 = 0;
-            unsafe { GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0).unwrap() };
-            //
-            unsafe { SetConsoleCtrlHandler(None, false).unwrap() };
+            unsafe { GenerateConsoleCtrlEvent(CTRL_C_EVENT, process_id) }?;
+
+            unsafe { SetConsoleCtrlHandler(None, false) }?;
         }
         // info!("we returned 1");
         result?;
