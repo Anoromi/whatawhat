@@ -3,7 +3,7 @@ use std::u32;
 use anyhow::Result;
 use tracing::info;
 use windows::Win32::{
-    System::Console::{FreeConsole, GenerateConsoleCtrlEvent, GetConsoleWindow},
+    System::Console::{FreeConsole, GenerateConsoleCtrlEvent, GetConsoleWindow, SetConsoleCtrlHandler},
     UI::WindowsAndMessaging::GetWindowThreadProcessId,
 };
 
@@ -29,15 +29,15 @@ pub fn gracefuly_terminate(uid: u32) -> Result<()> {
         // info!("{result:?}");
         if result.is_ok() {
             // info!("Steady");
-            unsafe { GenerateConsoleCtrlEvent(0, 0) }?;
+            // unsafe { GenerateConsoleCtrlEvent(0, 0) }?;
             // info!("Steady 2");
 
             // unsafe { .unwrap() };
-            // unsafe { SetConsoleCtrlHandler(None, true).unwrap() };
+            unsafe { SetConsoleCtrlHandler(None, true).unwrap() };
+            const CTRL_C_EVENT: u32 = 0;
+            unsafe { GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0).unwrap() };
             //
-            // unsafe { GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0).unwrap() };
-            //
-            // unsafe { SetConsoleCtrlHandler(None, false).unwrap() };
+            unsafe { SetConsoleCtrlHandler(None, false).unwrap() };
         }
         // info!("we returned 1");
         result?;
