@@ -39,7 +39,7 @@ pub async fn run_cli() -> Result<()> {
 
     match args {
         Args::Init { .. } => {
-            restart_server();
+            restart_server()?;
             Ok(())
         }
         Args::Serve { .. } => {

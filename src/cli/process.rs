@@ -1,5 +1,6 @@
 use std::{backtrace::{Backtrace, BacktraceStatus}, env, path::{Path, PathBuf}};
 
+use anyhow::Result;
 use sysinfo::{get_current_pid, System};
 use tracing::{error, info};
 
@@ -40,11 +41,11 @@ pub fn kill_previous_servers(name: &Path) {
     }
 }
 
-pub fn restart_server() {
-    let process_name = env::current_exe().unwrap();
+pub fn restart_server() -> Result<()> {
+    let process_name = env::current_exe()?;
     // kill_previous_servers(&process_name);
     let mut command = std::process::Command::new(process_name);
-    command.args(["serve", "hello"]);
+    command.args(["serve"]);
 
     #[cfg(windows)]
     {
@@ -61,5 +62,6 @@ pub fn restart_server() {
 
     println!("Spawning");
     #[allow(clippy::zombie_processes)]
-    let ch = command.spawn().unwrap();
+    let ch = command.spawn()?;
+    Ok(())
 }
