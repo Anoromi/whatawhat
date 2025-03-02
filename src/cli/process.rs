@@ -1,4 +1,8 @@
-use std::{backtrace::{Backtrace, BacktraceStatus}, env, path::{Path, PathBuf}};
+use std::{
+    backtrace::{Backtrace, BacktraceStatus},
+    env,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use sysinfo::{get_current_pid, System};
@@ -28,9 +32,16 @@ pub fn kill_previous_servers(name: &Path) {
         {
             info!("It happened");
             // process.kill();
-            gracefuly_terminate(pid.as_u32()).inspect_err(|e| {
-                error!("{:?} {}", e, e.backtrace());
-            });
+            let process_name = env::current_exe().expect("Can't operate without an excutable");
+            let mut command = std::process::Command::new(process_name);
+            command.args(["stop-process", &pid.as_u32().to_string()]);
+            command.spawn().unwrap().wait().unwrap();
+
+
+            // let v = Proce
+            // gracefuly_terminate(pid.as_u32()).inspect_err(|e| {
+            //     error!("{:?} {}", e, e.backtrace());
+            // });
             info!("Waiting to die");
 
             // TODO Gracefuly kill
@@ -42,7 +53,7 @@ pub fn kill_previous_servers(name: &Path) {
 }
 
 pub fn restart_server() -> Result<()> {
-    let process_name = env::current_exe()?;
+    let process_name = env::current_exe().expect("Can't operate without an excutable");
     // kill_previous_servers(&process_name);
     let mut command = std::process::Command::new(process_name);
     command.args(["serve"]);

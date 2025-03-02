@@ -6,6 +6,7 @@ use std::{env, path::PathBuf};
 use anyhow::Result;
 use clap::Parser;
 use process::{kill_previous_servers, restart_server};
+use termination::gracefuly_terminate;
 use tracing::{info, instrument};
 
 use crate::daemon::start_daemon;
@@ -22,6 +23,9 @@ enum Args {
         default_params: DaemonParams,
     },
     Stop {},
+    StopProcess {
+        pid: u32,
+    },
 }
 
 #[derive(Parser, Debug)]
@@ -52,5 +56,9 @@ pub async fn run_cli() -> Result<()> {
             info!("Success");
             Ok(())
         }
+        Args::StopProcess { pid } => {
+            gracefuly_terminate(pid)?;
+            Ok(())
+        },
     }
 }
