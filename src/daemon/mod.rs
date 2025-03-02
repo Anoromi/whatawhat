@@ -1,8 +1,16 @@
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
-use collection::producer::WindowData;
-use tokio::sync::broadcast;
+use collection::{afk::AfkEvaluator, collector::DataCollectionModule, producer::WindowData};
+use pipeline_event::PipeEvent;
+use processing::{local_save::LocalProcessor, ProcessingModule};
+use storage::{
+    application_storage::ApplicationStorageImpl, record_event::Record,
+    record_storage::ColorIndexStorage,
+};
+use tokio::sync::{broadcast, mpsc};
+
+use crate::windows_api::{GenericWindowManager, WindowManager};
 
 pub mod collection;
 pub mod pipeline_event;
@@ -10,16 +18,66 @@ pub mod processing;
 pub mod storage;
 pub mod update;
 
-const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(5);
+const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(1);
 
-pub async fn start_daemon() -> Result<()> {
-    let (sender, receiver) = broadcast::channel::<WindowData>(10);
-    // let collector = DataCollectorImpl::new(next, producer, collect_frequency)
-    // let processing: ProcessingService<RecordEventDto> = todo!();
+// fn init_file() -> Result<()> {
+//
+// }
+
+pub async fn start_daemon(dir: PathBuf) -> Result<()> {
+    let (sender, receiver) = mpsc::channel::<PipeEvent<Record>>(10);
+    let manager = GenericWindowManager::new()?;
+    let collector = DataCollectionModule::new(
+        sender,
+        Box::new(manager) as Box<dyn WindowManager>,
+        AfkEvaluator::from_s(60 * 2),
+        DEFAULT_COLLECTION_INTERVAL,
+        Box::new(chrono::Utc::now),
+    );
+    let storage = ApplicationStorageImpl::create(dir)?;
+
+    let saver = LocalProcessor::new(storage, NoColorIndex);
+    let processing = ProcessingModule::new(receiver, saver);
+    //let
     // let service_execution = tokio::join![processing.start()];
     // service_execution.0?;
 
-    update::detect_messages().await;
+    tokio::select! {
+        v = update::detect_messages() => {
+            v?;
+            println!("do_stuff_async() completed first")
+        }
+        v = processing.run() => {
+            v?;
+            println!("more_async_work() completed first")
+        }
+        v = collector.run() => {
+            v?;
+            println!("more_async_work() completed first")
+        }
+
+    }
+    // tokio::select! {
+    //     _ => processing.run(), collector.run()};
+    // let (a, b, c) = tokio::join!{
+    //     update::detect_messages(), processing.run(), collector.run()
+    // };
+    //
+    // a?;
+    // b?;
+    // c?;
 
     Ok(())
+}
+
+struct NoColorIndex;
+
+impl ColorIndexStorage for NoColorIndex {
+    async fn add_element(&self, key: &str, value: storage::record_event::Color) -> Result<()> {
+        Ok(())
+    }
+
+    async fn finalize(&self) -> Result<()> {
+        Ok(())
+    }
 }

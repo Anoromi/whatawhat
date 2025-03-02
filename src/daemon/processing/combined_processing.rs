@@ -1,21 +1,22 @@
 use anyhow::Result;
-use tokio::{join, sync::mpsc::Receiver};
+use tokio::join;
 
-use crate::daemon::{pipeline_event::PipeEvent, storage::record_event::Record};
+use crate::daemon::storage::record_event::Record;
 
 use super::module::EventProcessor;
 
 /// Intended for future use to potentialy save to multiple backends simultaneously.
+/// 
+///
 pub struct CombinedProcessor<A, B> {
-    receiver: Receiver<PipeEvent<Record>>,
+    // receiver: Receiver<PipeEvent<Record>>,
     value: (A, B),
 }
 
 impl CombinedProcessor<(), ()> {
-    pub fn new(receiver: Receiver<PipeEvent<Record>>) -> Self {
+    pub fn new() -> Self {
         Self {
             value: ((), ()),
-            receiver,
         }
     }
 }
@@ -32,31 +33,14 @@ impl<A: EventProcessor, B: EventProcessor> EventProcessor for CombinedProcessor<
 
 impl<A: EventProcessor, B: EventProcessor> CombinedProcessor<A, B> {
     pub fn combine<C: EventProcessor>(
-        Self { receiver, value }: Self,
+        Self { value }: Self,
         next: C,
     ) -> CombinedProcessor<(A, B), C> {
         CombinedProcessor {
             value: (value, next),
-            receiver,
         }
     }
 
-    pub async fn run(&mut self) -> Result<()> {
-        let message = self.receiver.recv().await;
-
-        match message {
-            None | Some(PipeEvent::Close) => {
-                if message.is_none() {
-                    // TODO add logging for unsuccessful close
-                }
-
-                let result = self.value.finalize().await;
-                self.receiver.close();
-                result
-            }
-            Some(PipeEvent::Next(message)) => self.value.process_next(message).await,
-        }
-    }
 }
 
 impl EventProcessor for () {

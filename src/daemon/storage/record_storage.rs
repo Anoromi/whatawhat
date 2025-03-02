@@ -40,3 +40,4 @@ pub trait ColorIndexStorage {
     fn add_element(&self, key: &str, value: Color) -> impl Future<Output = Result<()>>;
     fn finalize(&self) -> impl Future<Output = Result<()>> ;
 }
+

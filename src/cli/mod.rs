@@ -46,19 +46,30 @@ pub async fn run_cli() -> Result<()> {
             restart_server()?;
             Ok(())
         }
-        Args::Serve { .. } => {
-            start_daemon().await?;
-            Ok(())
-        }
         Args::Stop {} => {
             let process_name = env::current_exe().unwrap();
             kill_previous_servers(&process_name);
             info!("Success");
             Ok(())
         }
+        // used internally to run the process in daemon mode
+        Args::Serve { .. } => {
+            start_daemon(application_default_path()).await?;
+            Ok(())
+        }
+        // used internally to stop processes
         Args::StopProcess { pid } => {
             gracefuly_terminate(pid)?;
             Ok(())
         },
     }
+}
+
+pub fn application_default_path() -> PathBuf {
+    "./out".into()
+    // #[cfg(windows)]
+    // std::fs::create_dir("%APPDATA%")
+    // #[cfg(target_os = linux)]
+    // std::fs::create_dir("~/.local/share/")
+
 }

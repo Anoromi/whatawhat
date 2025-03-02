@@ -1254,3 +1254,211 @@ Stack backtrace:
     [2;3mat[0m src/daemon/update/mod.rs:15
     [2;3min[0m whatawhat::cli::[1mrun_cli[0m
 
+  [2m2025-02-25T20:22:44.623186Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:35
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:22:45.868197Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:35
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:23:07.736568Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:35
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:23:08.296874Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mSuccess[0m
+    [2;3mat[0m src/cli/mod.rs:52
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:26:23.356255Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:35
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:26:23.873080Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:35
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:28:49.668581Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:35
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:28:50.198367Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:35
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:29:06.585741Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:35
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:29:07.142604Z[0m [32m INFO[0m [1;32mwhatawhat::cli::process[0m[32m: [32mIt happened[0m
+    [2;3mat[0m src/cli/process.rs:29
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:29:07.145819Z[0m [33m WARN[0m [1;33mwhatawhat::daemon::update[0m[33m: [33mReceived ctrl_c event[0m
+    [2;3mat[0m src/daemon/update/mod.rs:15
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-02-25T20:29:09.153010Z[0m [31mERROR[0m [1;31mwhatawhat::cli::process[0m[31m: [31mAccess is denied. (0x80070005)
+
+Stack backtrace:
+   0: std::backtrace_rs::backtrace::dbghelp64::trace
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src\..\..\backtrace\src\backtrace/dbghelp64.rs:91:5
+   1: std::backtrace_rs::backtrace::trace_unsynchronized
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src\..\..\backtrace\src\backtrace/mod.rs:66:5
+   2: std::backtrace::Backtrace::create
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/backtrace.rs:331:13
+   3: std::backtrace::Backtrace::capture
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/backtrace.rs:296:9
+   4: anyhow::error::<impl core::convert::From<E> for anyhow::Error>::from
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anyhow-1.0.95/src/backtrace.rs:27:14
+   5: <core::result::Result<T,F> as core::ops::try_trait::FromResidual<core::result::Result<core::convert::Infallible,E>>>::from_residual
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\core\src\result.rs:2014:27
+   6: whatawhat::cli::termination::gracefuly_terminate
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/termination.rs:47:9
+   7: whatawhat::cli::process::kill_previous_servers
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/process.rs:31:13
+   8: whatawhat::cli::run_cli::{{closure}}::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/mod.rs:51:13
+   9: <tracing::instrument::Instrumented<T> as core::future::future::Future>::poll
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-0.1.41/src/instrument.rs:321:9
+  10: whatawhat::cli::run_cli::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/mod.rs:33:1
+  11: whatawhat::main::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/main.rs:47:15
+  12: tokio::runtime::park::CachedParkThread::block_on::{{closure}}
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/park.rs:284:63
+  13: tokio::runtime::coop::with_budget
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/coop.rs:107:5
+  14: tokio::runtime::coop::budget
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/coop.rs:73:5
+  15: tokio::runtime::park::CachedParkThread::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/park.rs:284:31
+  16: tokio::runtime::context::blocking::BlockingRegionGuard::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/context/blocking.rs:66:9
+  17: tokio::runtime::scheduler::multi_thread::MultiThread::block_on::{{closure}}
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/scheduler/multi_thread/mod.rs:87:13
+  18: tokio::runtime::context::runtime::enter_runtime
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/context/runtime.rs:65:16
+  19: tokio::runtime::scheduler::multi_thread::MultiThread::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/scheduler/multi_thread/mod.rs:86:9
+  20: tokio::runtime::runtime::Runtime::block_on_inner
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/runtime.rs:370:45
+  21: tokio::runtime::runtime::Runtime::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/runtime.rs:342:13
+  22: whatawhat::main
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/main.rs:50:5
+  23: core::ops::function::FnOnce::call_once
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\core\src\ops\function.rs:250:5
+  24: std::sys::backtrace::__rust_begin_short_backtrace
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\sys\backtrace.rs:152:18
+  25: std::rt::lang_start::{{closure}}
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\rt.rs:195:18
+  26: core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\core\src\ops/function.rs:284:13
+  27: std::panicking::try::do_call
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:584:40
+  28: std::panicking::try
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:547:19
+  29: std::panic::catch_unwind
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panic.rs:358:14
+  30: std::rt::lang_start_internal::{{closure}}
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/rt.rs:174:48
+  31: std::panicking::try::do_call
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:584:40
+  32: std::panicking::try
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:547:19
+  33: std::panic::catch_unwind
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panic.rs:358:14
+  34: std::rt::lang_start_internal
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/rt.rs:174:20
+  35: std::rt::lang_start
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\rt.rs:194:17
+  36: main
+  37: __tmainCRTStartup
+             at /usr/src/mingw-w64-11.0.1-3build1/mingw-w64-crt/crt/crtexe.c:272:15
+  38: mainCRTStartup
+             at /usr/src/mingw-w64-11.0.1-3build1/mingw-w64-crt/crt/crtexe.c:193:9
+  39: <unknown>
+  40: <unknown>    0: std::backtrace_rs::backtrace::dbghelp64::trace
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src\..\..\backtrace\src\backtrace/dbghelp64.rs:91:5
+   1: std::backtrace_rs::backtrace::trace_unsynchronized
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src\..\..\backtrace\src\backtrace/mod.rs:66:5
+   2: std::backtrace::Backtrace::create
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/backtrace.rs:331:13
+   3: std::backtrace::Backtrace::capture
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/backtrace.rs:296:9
+   4: anyhow::error::<impl core::convert::From<E> for anyhow::Error>::from
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anyhow-1.0.95/src/backtrace.rs:27:14
+   5: <core::result::Result<T,F> as core::ops::try_trait::FromResidual<core::result::Result<core::convert::Infallible,E>>>::from_residual
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\core\src\result.rs:2014:27
+   6: whatawhat::cli::termination::gracefuly_terminate
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/termination.rs:47:9
+   7: whatawhat::cli::process::kill_previous_servers
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/process.rs:31:13
+   8: whatawhat::cli::run_cli::{{closure}}::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/mod.rs:51:13
+   9: <tracing::instrument::Instrumented<T> as core::future::future::Future>::poll
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-0.1.41/src/instrument.rs:321:9
+  10: whatawhat::cli::run_cli::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/mod.rs:33:1
+  11: whatawhat::main::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/main.rs:47:15
+  12: tokio::runtime::park::CachedParkThread::block_on::{{closure}}
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/park.rs:284:63
+  13: tokio::runtime::coop::with_budget
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/coop.rs:107:5
+  14: tokio::runtime::coop::budget
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/coop.rs:73:5
+  15: tokio::runtime::park::CachedParkThread::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/park.rs:284:31
+  16: tokio::runtime::context::blocking::BlockingRegionGuard::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/context/blocking.rs:66:9
+  17: tokio::runtime::scheduler::multi_thread::MultiThread::block_on::{{closure}}
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/scheduler/multi_thread/mod.rs:87:13
+  18: tokio::runtime::context::runtime::enter_runtime
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/context/runtime.rs:65:16
+  19: tokio::runtime::scheduler::multi_thread::MultiThread::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/scheduler/multi_thread/mod.rs:86:9
+  20: tokio::runtime::runtime::Runtime::block_on_inner
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/runtime.rs:370:45
+  21: tokio::runtime::runtime::Runtime::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/runtime.rs:342:13
+  22: whatawhat::main
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/main.rs:50:5
+  23: core::ops::function::FnOnce::call_once
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\core\src\ops\function.rs:250:5
+  24: std::sys::backtrace::__rust_begin_short_backtrace
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\sys\backtrace.rs:152:18
+  25: std::rt::lang_start::{{closure}}
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\rt.rs:195:18
+  26: core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\core\src\ops/function.rs:284:13
+  27: std::panicking::try::do_call
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:584:40
+  28: std::panicking::try
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:547:19
+  29: std::panic::catch_unwind
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panic.rs:358:14
+  30: std::rt::lang_start_internal::{{closure}}
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/rt.rs:174:48
+  31: std::panicking::try::do_call
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:584:40
+  32: std::panicking::try
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:547:19
+  33: std::panic::catch_unwind
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panic.rs:358:14
+  34: std::rt::lang_start_internal
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/rt.rs:174:20
+  35: std::rt::lang_start
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\rt.rs:194:17
+  36: main
+  37: __tmainCRTStartup
+             at /usr/src/mingw-w64-11.0.1-3build1/mingw-w64-crt/crt/crtexe.c:272:15
+  38: mainCRTStartup
+             at /usr/src/mingw-w64-11.0.1-3build1/mingw-w64-crt/crt/crtexe.c:193:9
+  39: <unknown>
+  40: <unknown>
+[0m
+    [2;3mat[0m src/cli/process.rs:32
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+

@@ -10,13 +10,17 @@ use crate::{
 
 use super::module::EventProcessor;
 
-pub struct LocalSaverProcessor<R: RecordStorage, Cs> {
+pub struct LocalProcessor<R: RecordStorage, Cs> {
     records_storage: R,
     current_handle: Option<R::RecordFile>,
     color_storage: Cs,
 }
 
-impl<R: RecordStorage, Cs> LocalSaverProcessor<R, Cs> {
+impl<R: RecordStorage, Cs> LocalProcessor<R, Cs> {
+    pub fn new(records_storage: R, color_storage: Cs) -> Self {
+        Self { records_storage, current_handle: None, color_storage }
+    }
+
     async fn move_file_handle(&mut self) -> Result<R::RecordFile> {
         let current_file = self.current_handle.take();
         let now = get_current_time().date_naive();
@@ -30,7 +34,7 @@ impl<R: RecordStorage, Cs> LocalSaverProcessor<R, Cs> {
     }
 }
 
-impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalSaverProcessor<R, Cs> {
+impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalProcessor<R, Cs> {
     async fn process_next(
         &mut self,
         message: crate::daemon::storage::record_event::Record,

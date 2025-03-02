@@ -30,8 +30,8 @@ pub fn kill_previous_servers(name: &Path) {
             .filter(|v| name == *v)
             .is_some()
         {
-            info!("It happened");
-            // process.kill();
+            // after extensive investigation creating another process to kill (for both Windows and
+            // Linux) seemed like the best option
             let process_name = env::current_exe().expect("Can't operate without an excutable");
             let mut command = std::process::Command::new(process_name);
             command.args(["stop-process", &pid.as_u32().to_string()]);

@@ -1,7 +1,7 @@
 use std::{env, fs::File, path::PathBuf, thread::sleep, time::Duration};
 
 use anyhow::Result;
-use cli::run_cli;
+use cli::{application_default_path, run_cli};
 use tracing::error;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 use windows_api::{GenericWindowManager, WindowManager};
@@ -51,9 +51,9 @@ async fn main() -> Result<()> {
 }
 
 fn enable_logging() -> Result<()> {
-    let appender = tracing_appender::rolling::daily(get_app_dir()?.join("logs"), "app");
+    let appender = tracing_appender::rolling::daily(application_default_path().join("logs"), "app");
 
-    let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
+    let stdout = std::io::stdout.with_max_level(tracing::Level::TRACE);
 
     tracing_subscriber::fmt()
         .with_writer(stdout.and(appender))
@@ -64,10 +64,3 @@ fn enable_logging() -> Result<()> {
 
 fn init_application_directory() {}
 
-fn get_app_dir() -> Result<PathBuf> {
-    Ok(std::env::current_dir()?.join("data"))
-    // #[cfg(windows)]
-    // std::fs::create_dir("%APPDATA%")
-    // #[cfg(target_os = linux)]
-    // std::fs::create_dir("~/.local/share/")
-}
