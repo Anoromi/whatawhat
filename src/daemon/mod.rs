@@ -3,7 +3,7 @@ use std::{path::PathBuf, time::Duration};
 use anyhow::Result;
 use collection::{afk::AfkEvaluator, collector::DataCollectionModule, producer::WindowData};
 use pipeline_event::PipeEvent;
-use processing::{local_save::LocalProcessor, ProcessingModule};
+use processing::{local_save::LocalSaver, ProcessingModule};
 use storage::{
     application_storage::ApplicationStorageImpl, record_event::Record,
     record_storage::ColorIndexStorage,
@@ -34,9 +34,9 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
         DEFAULT_COLLECTION_INTERVAL,
         Box::new(chrono::Utc::now),
     );
-    let storage = ApplicationStorageImpl::create(dir)?;
+    let storage = ApplicationStorageImpl::create(dir.join("records"))?;
 
-    let saver = LocalProcessor::new(storage, NoColorIndex);
+    let saver = LocalSaver::new(storage, NoColorIndex, Box::new(chrono::Utc::now));
     let processing = ProcessingModule::new(receiver, saver);
     //let
     // let service_execution = tokio::join![processing.start()];
@@ -45,15 +45,12 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
     tokio::select! {
         v = update::detect_messages() => {
             v?;
-            println!("do_stuff_async() completed first")
         }
         v = processing.run() => {
             v?;
-            println!("more_async_work() completed first")
         }
         v = collector.run() => {
             v?;
-            println!("more_async_work() completed first")
         }
 
     }

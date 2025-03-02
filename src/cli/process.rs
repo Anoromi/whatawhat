@@ -7,6 +7,7 @@ use std::{
 use anyhow::Result;
 use sysinfo::{get_current_pid, System};
 use tracing::{error, info};
+use windows::Win32::System::Threading::DETACHED_PROCESS;
 
 use crate::cli::termination::gracefuly_terminate;
 
@@ -63,7 +64,7 @@ pub fn restart_server() -> Result<()> {
         use std::os::windows::process::CommandExt;
         use windows::Win32::System::Threading::CREATE_NEW_CONSOLE;
 
-        command.creation_flags(CREATE_NEW_CONSOLE.0);
+        command.creation_flags(DETACHED_PROCESS.0);
     }
     #[cfg(unix)]
     {

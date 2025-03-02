@@ -7,6 +7,7 @@ use anyhow::Result;
 use clap::Parser;
 use process::{kill_previous_servers, restart_server};
 use termination::gracefuly_terminate;
+use tokio::io;
 use tracing::{info, instrument};
 
 use crate::daemon::start_daemon;
@@ -54,22 +55,28 @@ pub async fn run_cli() -> Result<()> {
         }
         // used internally to run the process in daemon mode
         Args::Serve { .. } => {
-            start_daemon(application_default_path()).await?;
+            start_daemon(application_default_path()?).await?;
             Ok(())
         }
         // used internally to stop processes
         Args::StopProcess { pid } => {
             gracefuly_terminate(pid)?;
             Ok(())
-        },
+        }
     }
 }
 
-pub fn application_default_path() -> PathBuf {
-    "./out".into()
-    // #[cfg(windows)]
-    // std::fs::create_dir("%APPDATA%")
-    // #[cfg(target_os = linux)]
-    // std::fs::create_dir("~/.local/share/")
-
+pub fn application_default_path() -> Result<PathBuf> {
+    #[cfg(windows)]
+    {
+        let mut path =
+            PathBuf::from(env::var("APPDATA").expect("APPDATA should be present on Windows"));
+        path.push("whatawhat");
+        match std::fs::create_dir(&path) {
+            Ok(_) => {}
+            Err(v) if v.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(v) => return Err(v.into())
+        };
+        Ok(path)
+    }
 }

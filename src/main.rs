@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
 }
 
 fn enable_logging() -> Result<()> {
-    let appender = tracing_appender::rolling::daily(application_default_path().join("logs"), "app");
+    let appender = tracing_appender::rolling::daily(application_default_path()?.join("logs"), "app");
 
     let stdout = std::io::stdout.with_max_level(tracing::Level::TRACE);
 

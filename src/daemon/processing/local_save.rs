@@ -1,3 +1,5 @@
+use std::ops::DerefMut;
+
 use anyhow::Result;
 
 use crate::{
@@ -5,25 +7,26 @@ use crate::{
         entities::UsageRecordEntity,
         record_storage::{ColorIndexStorage, RecordFileHandle, RecordStorage},
     },
-    utils::time::get_current_time,
+    utils::{date_provider::{self, DateProvider}, time::get_current_time},
 };
 
 use super::module::EventProcessor;
 
-pub struct LocalProcessor<R: RecordStorage, Cs> {
+pub struct LocalSaver<R: RecordStorage, Cs> {
     records_storage: R,
     current_handle: Option<R::RecordFile>,
     color_storage: Cs,
+    date_provider: DateProvider
 }
 
-impl<R: RecordStorage, Cs> LocalProcessor<R, Cs> {
-    pub fn new(records_storage: R, color_storage: Cs) -> Self {
-        Self { records_storage, current_handle: None, color_storage }
+impl<R: RecordStorage, Cs> LocalSaver<R, Cs> {
+    pub fn new(records_storage: R, color_storage: Cs, date_provider: DateProvider) -> Self {
+        Self { records_storage, current_handle: None, color_storage, date_provider }
     }
 
     async fn move_file_handle(&mut self) -> Result<R::RecordFile> {
         let current_file = self.current_handle.take();
-        let now = get_current_time().date_naive();
+        let now = self.date_provider.deref_mut()().date_naive();
         match current_file {
             Some(file) if file.get_date() != now => self.records_storage.compact_file(file).await?,
             Some(v) => return Ok(v),
@@ -34,7 +37,7 @@ impl<R: RecordStorage, Cs> LocalProcessor<R, Cs> {
     }
 }
 
-impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalProcessor<R, Cs> {
+impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalSaver<R, Cs> {
     async fn process_next(
         &mut self,
         message: crate::daemon::storage::record_event::Record,

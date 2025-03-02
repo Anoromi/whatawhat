@@ -8936,3 +8936,295 @@ Stack backtrace:
   49: <unknown>[0m
     [2;3mat[0m src/main.rs:48
 
+  [2m2025-03-02T18:05:27.794483Z[0m [32m INFO[0m [1;32mwhatawhat::cli[0m[32m: [32mHello there[0m
+    [2;3mat[0m src/cli/mod.rs:39
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.820676Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::collection::collector[0m[32m: [32mSending message Record { timestamp: 2025-03-02T18:05:27.819297300Z, window_name: "bash in anoromi", process_name: "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.21.10351.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe", color: None, afk: true }[0m
+    [2;3mat[0m src/daemon/collection/collector.rs:69
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.827793Z[0m [31mERROR[0m [1;31mwhatawhat::daemon::processing[0m[31m: [31mProcessing message Record { timestamp: 2025-03-02T18:05:27.819297300Z, window_name: "bash in anoromi", process_name: "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.21.10351.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe", color: None, afk: true }[0m
+    [2;3mat[0m src/daemon/processing/mod.rs:29
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.832542Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.837469Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.850361Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.850978Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.969046Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.972166Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.984741Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:27.985505Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.095268Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.098468Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.109276Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.109949Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.220893Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.223747Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.234675Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.235326Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.345634Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.348572Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.359482Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.360120Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.468258Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.471404Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.481855Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.482405Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.594048Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.597771Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.608491Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.609120Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.717738Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.720805Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.730776Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.731285Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.827716Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::collection::collector[0m[32m: [32mSending message Record { timestamp: 2025-03-02T18:05:28.827695400Z, window_name: "bash in anoromi", process_name: "C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.21.10351.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe", color: None, afk: true }[0m
+    [2;3mat[0m src/daemon/collection/collector.rs:69
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.843290Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.846392Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.858008Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.858854Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.967444Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.970397Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.980910Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:28.981549Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:29.090907Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mappending[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:126
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:29.094041Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mlocking[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:133
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:29.104824Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mwriting[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:135
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:29.105338Z[0m [32m INFO[0m [1;32mwhatawhat::daemon::storage::application_storage[0m[32m: [32mhehe[0m
+    [2;3mat[0m src/daemon/storage/application_storage.rs:136
+    [2;3min[0m whatawhat::cli::[1mrun_cli[0m
+
+  [2m2025-03-02T18:05:29.110553Z[0m [31mERROR[0m [1;31mwhatawhat[0m[31m: [31mThe segment is already unlocked. (os error 158)
+
+Stack backtrace:
+   0: std::backtrace_rs::backtrace::dbghelp64::trace
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src\..\..\backtrace\src\backtrace/dbghelp64.rs:91:5
+   1: std::backtrace_rs::backtrace::trace_unsynchronized
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src\..\..\backtrace\src\backtrace/mod.rs:66:5
+   2: std::backtrace::Backtrace::create
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/backtrace.rs:331:13
+   3: std::backtrace::Backtrace::capture
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/backtrace.rs:296:9
+   4: anyhow::error::<impl core::convert::From<E> for anyhow::Error>::from
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anyhow-1.0.95/src/backtrace.rs:27:14
+   5: <core::result::Result<T,F> as core::ops::try_trait::FromResidual<core::result::Result<core::convert::Infallible,E>>>::from_residual
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\core\src\result.rs:2014:27
+   6: whatawhat::daemon::storage::application_storage::UsageIntervalRecordFile<F>::append_inner::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/daemon/storage/application_storage.rs:137:9
+   7: <whatawhat::daemon::storage::application_storage::UsageIntervalRecordFile<F> as whatawhat::daemon::storage::record_storage::RecordFileHandle>::append::{{closure}}::{{closure}}::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/daemon/storage/application_storage.rs:102:53
+   8: whatawhat::utils::retry::run_with_retry::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/utils/retry.rs:14:14
+   9: <whatawhat::daemon::storage::application_storage::UsageIntervalRecordFile<F> as whatawhat::daemon::storage::record_storage::RecordFileHandle>::append::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/daemon/storage/application_storage.rs:104:10
+  10: <whatawhat::daemon::processing::local_save::LocalProcessor<R,Cs> as whatawhat::daemon::processing::module::EventProcessor>::process_next::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/daemon/processing/local_save.rs:57:14
+  11: whatawhat::daemon::processing::ProcessingModule<P>::run::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/daemon/processing/mod.rs:30:57
+  12: whatawhat::daemon::start_daemon::{{closure}}::{{closure}}
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/macros/select.rs:557:49
+  13: <core::future::poll_fn::PollFn<F> as core::future::future::Future>::poll
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\core\src\future\poll_fn.rs:151:9
+  14: whatawhat::daemon::start_daemon::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/daemon/mod.rs:45:5
+  15: whatawhat::cli::run_cli::{{closure}}::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/mod.rs:57:54
+  16: <tracing::instrument::Instrumented<T> as core::future::future::Future>::poll
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-0.1.41/src/instrument.rs:321:9
+  17: whatawhat::cli::run_cli::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/cli/mod.rs:37:1
+  18: whatawhat::main::{{closure}}
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/main.rs:47:15
+  19: <core::pin::Pin<P> as core::future::future::Future>::poll
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\core\src\future\future.rs:124:9
+  20: tokio::runtime::park::CachedParkThread::block_on::{{closure}}
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/park.rs:284:63
+  21: tokio::runtime::coop::with_budget
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/coop.rs:107:5
+  22: tokio::runtime::coop::budget
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/coop.rs:73:5
+  23: tokio::runtime::park::CachedParkThread::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/park.rs:284:31
+  24: tokio::runtime::context::blocking::BlockingRegionGuard::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/context/blocking.rs:66:9
+  25: tokio::runtime::scheduler::multi_thread::MultiThread::block_on::{{closure}}
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/scheduler/multi_thread/mod.rs:87:13
+  26: tokio::runtime::context::runtime::enter_runtime
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/context/runtime.rs:65:16
+  27: tokio::runtime::scheduler::multi_thread::MultiThread::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/scheduler/multi_thread/mod.rs:86:9
+  28: tokio::runtime::runtime::Runtime::block_on_inner
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/runtime.rs:370:45
+  29: tokio::runtime::runtime::Runtime::block_on
+             at /home/anoromi/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.43.0/src/runtime/runtime.rs:340:13
+  30: whatawhat::main
+             at /home/anoromi/code/rust/whatawhat/whatawhat-collector/src/main.rs:50:5
+  31: core::ops::function::FnOnce::call_once
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\core\src\ops\function.rs:250:5
+  32: std::sys::backtrace::__rust_begin_short_backtrace
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\sys\backtrace.rs:152:18
+  33: std::rt::lang_start::{{closure}}
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\rt.rs:195:18
+  34: core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\core\src\ops/function.rs:284:13
+  35: std::panicking::try::do_call
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:584:40
+  36: std::panicking::try
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:547:19
+  37: std::panic::catch_unwind
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panic.rs:358:14
+  38: std::rt::lang_start_internal::{{closure}}
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/rt.rs:174:48
+  39: std::panicking::try::do_call
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:584:40
+  40: std::panicking::try
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panicking.rs:547:19
+  41: std::panic::catch_unwind
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/panic.rs:358:14
+  42: std::rt::lang_start_internal
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688/library\std\src/rt.rs:174:20
+  43: std::rt::lang_start
+             at /rustc/4d91de4e48198da2e33413efdcd9cd2cc0c46688\library\std\src\rt.rs:194:17
+  44: main
+  45: __tmainCRTStartup
+             at /usr/src/mingw-w64-11.0.1-3build1/mingw-w64-crt/crt/crtexe.c:272:15
+  46: mainCRTStartup
+             at /usr/src/mingw-w64-11.0.1-3build1/mingw-w64-crt/crt/crtexe.c:193:9
+  47: <unknown>
+  48: <unknown>[0m
+    [2;3mat[0m src/main.rs:48
+

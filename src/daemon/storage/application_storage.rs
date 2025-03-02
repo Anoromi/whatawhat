@@ -61,7 +61,7 @@ impl ApplicationStorageImpl {
 impl RecordStorage for ApplicationStorageImpl {
     type RecordFile = UsageIntervalRecordFile<File>;
 
-    /// this is intended for future use to potentially reduce file size
+    /// this is intended for future use to reduce file size
     async fn compact_files(&self) -> Result<()> {
         unimplemented!("Api isn't ready")
     }
@@ -73,8 +73,8 @@ impl RecordStorage for ApplicationStorageImpl {
         let v = File::options()
             .write(true)
             .create(true)
-            .append(true)
             .read(true)
+            .truncate(false)
             .open(path)
             .await?;
 
@@ -144,6 +144,8 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> UsageIntervalReco
                 .await?
         );
 
+        dbg!(file.stream_position().await?);
+
         let last_interval: Option<UsageIntervalEntity> = if last_line.is_empty() {
             None
         } else {
@@ -167,6 +169,7 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> UsageIntervalReco
         }
 
         file.write_all(&buffer).await?;
+        file.flush().await?;
         Ok(())
     }
 }

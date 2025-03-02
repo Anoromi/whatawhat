@@ -14,8 +14,6 @@ pub async fn detect_messages() -> Result<()> {
         _ = tokio::signal::ctrl_c() => {
             warn!("Received ctrl_c event");
         },
-        _ = receive_interprocess_messages() => {
-        }
     };
 
     Ok(())

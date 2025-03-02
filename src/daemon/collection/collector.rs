@@ -12,18 +12,17 @@ use tokio::{
 use tracing::{error, info};
 
 use crate::{
-    daemon::{pipeline_event::PipeEvent, storage::record_event::Record},
-    windows_api::WindowManager,
+    daemon::{pipeline_event::PipeEvent, storage::record_event::Record}, utils::date_provider::DateProvider, windows_api::WindowManager
 };
 
-use super::{afk::AfkEvaluator, producer::WindowData};
+use super::{afk::AfkEvaluator};
 
 pub struct DataCollectionModule {
     next: mpsc::Sender<PipeEvent<Record>>,
     producer: Box<dyn WindowManager>,
     afk_evaluator: AfkEvaluator,
     collection_frequency: Duration,
-    time_provider: Box<dyn FnMut() -> chrono::DateTime<Utc>>,
+    time_provider: DateProvider,
 }
 
 impl DataCollectionModule {
