@@ -8,6 +8,6 @@ impl AfkEvaluator {
     }
 
     pub fn is_afk(&self, idle_time: u32) -> bool{
-        self.threshold_ms > idle_time 
+        self.threshold_ms < idle_time 
     }
 }

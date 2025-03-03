@@ -1,3 +1,4 @@
+use chrono::TimeDelta;
 use chrono::Utc;
 
 use chrono::DateTime;
@@ -13,6 +14,16 @@ pub struct UsageIntervalEntity {
     pub start: DateTime<Utc>,
     pub end: DateTime<Utc>,
     pub afk: bool,
+}
+
+impl UsageIntervalEntity {
+    pub fn duration(&self) -> TimeDelta {
+        if self.end < self.start {
+            TimeDelta::zero()
+        } else {
+            self.end.signed_duration_since(self.start)
+        }
+    }
 }
 
 impl From<UsageRecordEntity> for UsageIntervalEntity {

@@ -51,7 +51,7 @@ pub fn get_active() -> Result<ActiveWindowData> {
         )
     }?;
 
-    let mut text: [u16; 1024] = [0; 1024];
+    let mut text: [u16; 4096] = [0; 4096];
     let process_name = unsafe { get_window_process_path(process_handle, &mut text)? };
     let title = unsafe { get_window_title(window, &mut text) };
 
@@ -76,6 +76,9 @@ unsafe fn get_window_process_path(window_handle: HANDLE, text: &mut [u16]) -> Re
 
 unsafe fn get_window_title(window_handle: HWND, text: &mut [u16]) -> String {
     let len = unsafe { GetWindowTextW(window_handle, text) };
+    println!("name {}", String::from_utf16_lossy(&text[..len as usize]));
+    // 
+    // println!("name utf-8 {}", String::from_utf8_loss(&text[..len as usize]));
     String::from_utf16_lossy(&text[..len as usize])
 }
 

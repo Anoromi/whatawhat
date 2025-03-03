@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicU64;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, NaiveDate, Utc};
 
 static TIME_OFFSET: AtomicU64 = AtomicU64::new(0);
 
@@ -20,4 +20,9 @@ pub fn advance_time(duration: Duration) {
         nanoseconds.try_into().unwrap(),
         std::sync::atomic::Ordering::SeqCst,
     );
+}
+
+
+pub fn date_to_record_name(date: NaiveDate) -> String {
+    date.format("%Y-%m-%d").to_string()
 }

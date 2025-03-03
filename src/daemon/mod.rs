@@ -5,8 +5,7 @@ use collection::{afk::AfkEvaluator, collector::DataCollectionModule, producer::W
 use pipeline_event::PipeEvent;
 use processing::{local_save::LocalSaver, ProcessingModule};
 use storage::{
-    application_storage::ApplicationStorageImpl, record_event::Record,
-    record_storage::ColorIndexStorage,
+    record_event::Record, record_storage::{ColorIndexStorage, RecordStorage, RecordStorageImpl}
 };
 use tokio::sync::{broadcast, mpsc};
 
@@ -20,10 +19,6 @@ pub mod update;
 
 const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(1);
 
-// fn init_file() -> Result<()> {
-//
-// }
-
 pub async fn start_daemon(dir: PathBuf) -> Result<()> {
     let (sender, receiver) = mpsc::channel::<PipeEvent<Record>>(10);
     let manager = GenericWindowManager::new()?;
@@ -34,7 +29,7 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
         DEFAULT_COLLECTION_INTERVAL,
         Box::new(chrono::Utc::now),
     );
-    let storage = ApplicationStorageImpl::create(dir.join("records"))?;
+    let storage = RecordStorageImpl::new(dir.join("records"))?;
 
     let saver = LocalSaver::new(storage, NoColorIndex, Box::new(chrono::Utc::now));
     let processing = ProcessingModule::new(receiver, saver);
