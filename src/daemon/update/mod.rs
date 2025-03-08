@@ -1,8 +1,7 @@
 
 use anyhow::Result;
-use listener::receive_interprocess_messages;
 use tokio::select;
-use tracing::{info, warn};
+use tracing::warn;
 
 pub mod listener;
 pub mod termination;

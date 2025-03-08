@@ -39,7 +39,8 @@ pub trait RecordStorage {
     fn get_data_for(
         &self,
         date: NaiveDate,
-    ) -> impl Future<Output = Result<Vec<UsageIntervalEntity>>>;
+    ) -> impl Future<Output = Result<Vec<UsageIntervalEntity>>> + Send;
+
 }
 
 pub trait IndexStorage {
@@ -59,6 +60,7 @@ pub trait RecordFileHandle {
     fn append(&mut self, usage_records: Vec<UsageRecordEntity>)
         -> impl Future<Output = Result<()>>;
     fn get_date(&self) -> NaiveDate;
+    fn flush(&mut self)  -> impl Future<Output = Result<()>>;
 }
 
 pub trait ColorIndexStorage {
@@ -165,6 +167,10 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> RecordFileHandle
     fn get_date(&self) -> chrono::NaiveDate {
         self.date
     }
+
+    async fn flush(&mut self)  -> Result<()> {
+        Ok(())
+    }
 }
 
 impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> UsageIntervalRecordFile<F> {
@@ -241,7 +247,7 @@ fn collapse_records(
                     && interval.process_name == record.process_name
                     && interval.afk == record.afk =>
             {
-                interval.end = record.moment
+                interval.set_end(record.moment)
             }
             Some(_) | None => {
                 intervals.push(record.into());
@@ -273,7 +279,7 @@ mod tests {
             window_name: "initial".into(),
             process_name: "initial".into(),
             start: Utc::now() - Duration::seconds(2),
-            end: Utc::now() - Duration::seconds(1),
+            duration: Duration::seconds(1),
             afk: false,
         })
         .unwrap();
@@ -284,7 +290,7 @@ mod tests {
             window_name: "window".into(),
             process_name: "process".into(),
             start: Utc::now() - Duration::seconds(2),
-            end: Utc::now() - Duration::seconds(1),
+            duration: Duration::seconds(1),
             afk: true,
         })
         .unwrap();
@@ -317,7 +323,7 @@ mod tests {
             window_name: "initial".into(),
             process_name: "initial".into(),
             start: Utc::now() - Duration::seconds(2),
-            end: Utc::now() - Duration::seconds(1),
+            duration: Duration::seconds(1),
             afk: false,
         })
         .unwrap();
@@ -328,7 +334,7 @@ mod tests {
             window_name: "window".into(),
             process_name: "process".into(),
             start: Utc::now() - Duration::seconds(2),
-            end: Utc::now() - Duration::seconds(1),
+            duration: Duration::seconds(1),
             afk: true,
         })
         .unwrap();

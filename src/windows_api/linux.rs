@@ -120,7 +120,7 @@ impl LinuxWindowManager {
         dbg!(&window_name);
         dbg!(&process_name);
         Ok(ActiveWindowData {
-            name: window_name.into(),
+            window_title: window_name.into(),
             process_name: process_name.into(),
         })
     }

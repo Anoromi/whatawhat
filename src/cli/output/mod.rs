@@ -1,32 +1,37 @@
-use std::{future, path::PathBuf, sync::Arc};
+pub mod analysis;
+pub mod sliding_grouping;
+
+use std::{future, sync::Arc};
 
 use anyhow::Result;
-use chrono::{DateTime, NaiveDate, TimeDelta, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use futures::{stream, Stream, StreamExt};
 use tracing::error;
 
-use crate::daemon::storage::{
-    record_storage::RecordStorage, entities::UsageIntervalEntity,
-};
+use crate::daemon::storage::{entities::UsageIntervalEntity, record_storage::RecordStorage};
 
 pub struct PrintConfig {
-    pub min_duration: TimeDelta,
     pub with_afk: bool,
+    pub end: DateTime<Utc>,
+    pub start: DateTime<Utc>,
 }
 
 impl PrintConfig {
-    fn should_display(&self, entity: &UsageIntervalEntity) -> bool {
-        (self.with_afk || !entity.afk) && entity.duration() > self.min_duration
+    fn filter(&self, entity: UsageIntervalEntity) -> Option<UsageIntervalEntity> {
+        if !self.with_afk && entity.afk  {
+            return None
+        }
+        entity.filter_by_interval(self.start, self.end)
     }
 }
 
 pub fn extract_between(
     storage: impl RecordStorage,
-    start: DateTime<Utc>,
-    end: DateTime<Utc>,
     print_config: PrintConfig,
-) -> impl Stream<Item = Result<UsageIntervalEntity>> + Unpin {
+) -> impl Stream<Item = Result<UsageIntervalEntity>> {
     let storage = Arc::new(storage);
+    let start = print_config.start;
+    let end = print_config.end;
 
     let pipe = tokio_stream::iter(DateRangeIter::new(start.date_naive(), end.date_naive()));
 
@@ -37,7 +42,7 @@ pub fn extract_between(
         })
         .buffered(8);
 
-    files
+    let result = files
         .flat_map(|(day, data)| match data {
             Ok(data) => stream::iter(data).map(Ok).boxed(),
             Err(e) => {
@@ -45,12 +50,13 @@ pub fn extract_between(
                 stream::once(future::ready(Err(e))).boxed()
             }
         })
-        // .filter(move |v| {
-        //     future::ready(match v {
-        //         Ok(event) => print_config.should_display(event),
-        //         Err(_) => true,
-        //     })
-        // })
+        .filter_map(move |v| {
+            future::ready(
+                v.map(|v| print_config.filter(v)).transpose() 
+            )
+        });
+
+    result
 }
 
 struct DateRangeIter {

@@ -1,15 +1,12 @@
 use std::{
-    backtrace::{Backtrace, BacktraceStatus},
     env,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use anyhow::Result;
 use sysinfo::{get_current_pid, System};
-use tracing::{error, info};
-use windows::Win32::System::Threading::DETACHED_PROCESS;
+use tracing::info;
 
-use crate::cli::termination::gracefuly_terminate;
 
 pub fn kill_previous_servers(name: &Path) {
     let system = System::new_all();
@@ -53,8 +50,11 @@ pub fn kill_previous_servers(name: &Path) {
     }
 }
 
+/// Intended for shutting down previous server and starting new one. Currently for simplicity sake
+/// it operates using a detached process. This is not great but it's not as hard to configure.
 pub fn restart_server() -> Result<()> {
     let process_name = env::current_exe().expect("Can't operate without an excutable");
+    // TODO
     // kill_previous_servers(&process_name);
     let mut command = std::process::Command::new(process_name);
     command.args(["serve"]);
@@ -62,7 +62,7 @@ pub fn restart_server() -> Result<()> {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
-        use windows::Win32::System::Threading::CREATE_NEW_CONSOLE;
+        use windows::Win32::System::Threading::DETACHED_PROCESS;
 
         command.creation_flags(DETACHED_PROCESS.0);
     }

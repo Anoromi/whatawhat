@@ -1,4 +1,4 @@
-use chrono::TimeDelta;
+use chrono::Duration;
 use chrono::Utc;
 
 use chrono::DateTime;
@@ -11,18 +11,78 @@ use std::sync::Arc;
 pub struct UsageIntervalEntity {
     pub window_name: Arc<str>,
     pub process_name: Arc<str>,
+    #[serde(with = "chrono::serde::ts_seconds")]
     pub start: DateTime<Utc>,
-    pub end: DateTime<Utc>,
+    #[serde(with = "duration_ser")]
+    pub duration: Duration,
+    #[serde(default)]
     pub afk: bool,
 }
 
 impl UsageIntervalEntity {
-    pub fn duration(&self) -> TimeDelta {
-        if self.end < self.start {
-            TimeDelta::zero()
+    pub fn end(&self) -> DateTime<Utc> {
+        self.start + self.duration
+    }
+
+    pub fn set_end(&mut self, v: DateTime<Utc>) {
+        self.duration = v - self.start;
+    }
+
+    pub fn split_by(
+        self,
+        split: DateTime<Utc>,
+    ) -> (Option<UsageIntervalEntity>, Option<UsageIntervalEntity>) {
+        let end = self.end();
+        if split < self.start {
+            (None, Some(self))
+        } else if split >= end {
+            (Some(self), None)
         } else {
-            self.end.signed_duration_since(self.start)
+            let before = UsageIntervalEntity {
+                window_name: self.window_name.clone(),
+                process_name: self.process_name.clone(),
+                start: self.start,
+                duration: split - self.start,
+                afk: self.afk,
+            };
+            let after = UsageIntervalEntity {
+                window_name: self.window_name,
+                process_name: self.process_name,
+                start: split,
+                duration: end - split,
+                afk: self.afk,
+            };
+            (Some(before), Some(after))
         }
+    }
+
+    pub fn filter_by_interval(
+        self,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+    ) -> Option<UsageIntervalEntity> {
+        self.split_by(from).1.and_then(|v| v.split_by(to).0)
+    }
+}
+
+mod duration_ser {
+    use chrono::Duration;
+    use serde::{self, Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_i64(duration.num_seconds())
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Duration, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = i64::deserialize(deserializer)?;
+        let duration = Duration::seconds(s);
+        Ok(duration)
     }
 }
 
@@ -39,7 +99,7 @@ impl From<UsageRecordEntity> for UsageIntervalEntity {
             window_name,
             process_name,
             start: moment,
-            end: moment,
+            duration: Duration::zero(),
             afk,
         }
     }

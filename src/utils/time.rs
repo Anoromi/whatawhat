@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicU64;
 
-use chrono::{DateTime, Duration, NaiveDate, Utc};
+use chrono::{DateTime, Duration, NaiveDate, NaiveTime, TimeZone, Utc};
 
 static TIME_OFFSET: AtomicU64 = AtomicU64::new(0);
 
@@ -25,4 +25,12 @@ pub fn advance_time(duration: Duration) {
 
 pub fn date_to_record_name(date: NaiveDate) -> String {
     date.format("%Y-%m-%d").to_string()
+}
+
+pub fn day_start<Tz: TimeZone>(date: DateTime<Tz>) -> DateTime<Tz> {
+    date.with_time(NaiveTime::MIN).unwrap()
+}
+
+pub fn next_day_start<Tz: TimeZone>(date: DateTime<Tz>) -> DateTime<Tz> {
+    (date + Duration::days(1)).with_time(NaiveTime::MIN).unwrap()
 }

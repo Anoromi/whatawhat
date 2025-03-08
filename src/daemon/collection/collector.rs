@@ -1,5 +1,5 @@
 use std::{
-    ops::{Deref, DerefMut},
+    ops::DerefMut,
     time::Duration,
 };
 
@@ -12,7 +12,7 @@ use tokio::{
 use tracing::{error, info};
 
 use crate::{
-    daemon::{pipeline_event::PipeEvent, storage::record_event::Record}, utils::date_provider::DateProvider, windows_api::WindowManager
+    daemon::{pipeline_event::PipeEvent, storage::record_event::Record}, utils::date_provider::DateTimeProvider, windows_api::WindowManager
 };
 
 use super::{afk::AfkEvaluator};
@@ -22,7 +22,7 @@ pub struct DataCollectionModule {
     producer: Box<dyn WindowManager>,
     afk_evaluator: AfkEvaluator,
     collection_frequency: Duration,
-    time_provider: DateProvider,
+    time_provider: DateTimeProvider,
 }
 
 impl DataCollectionModule {

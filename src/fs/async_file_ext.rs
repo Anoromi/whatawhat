@@ -1,11 +1,6 @@
-use std::{io::Cursor, pin::Pin, task::ready};
+use std::io::Cursor;
 
-use anyhow::Result;
-use tokio::{
-    fs::File,
-    pin,
-    task::{block_in_place, spawn_blocking},
-};
+use tokio::fs::File;
 
 pub trait FileLock {
     fn lock_exclusive_in_place(&self) -> std::io::Result<()>;

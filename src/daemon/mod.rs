@@ -1,13 +1,13 @@
 use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
-use collection::{afk::AfkEvaluator, collector::DataCollectionModule, producer::WindowData};
+use collection::{afk::AfkEvaluator, collector::DataCollectionModule};
 use pipeline_event::PipeEvent;
 use processing::{local_save::LocalSaver, ProcessingModule};
 use storage::{
-    record_event::Record, record_storage::{ColorIndexStorage, RecordStorage, RecordStorageImpl}
+    record_event::Record, record_storage::{ColorIndexStorage, RecordStorageImpl}
 };
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::mpsc;
 
 use crate::windows_api::{GenericWindowManager, WindowManager};
 

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use module::EventProcessor;
 use tokio::sync::mpsc::Receiver;
-use tracing::{error, trace};
+use tracing::debug;
 
 use super::{pipeline_event::PipeEvent, storage::record_event::Record};
 
@@ -26,7 +26,7 @@ impl<P: EventProcessor> ProcessingModule<P> {
         while let Some(message) = self.receiver.recv().await {
             match message {
                 PipeEvent::Next(record) => {
-                    error!("Processing message {:?}", record);
+                    debug!("Processing message {:?}", record);
                     self.processor.process_next(record).await?
                 }
             }
