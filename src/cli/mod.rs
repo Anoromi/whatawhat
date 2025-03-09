@@ -5,12 +5,12 @@ pub mod termination;
 use std::{env, ops::Deref, path::PathBuf};
 
 use anyhow::Result;
-use chrono::{DateTime, Duration, Local, Utc};
+use chrono::{DateTime, Duration, Local, TimeDelta, Utc};
 use clap::{error::ErrorKind, CommandFactory, Parser};
 use dateparser::DateTimeUtc;
-use futures::StreamExt;
+use futures::{Stream, StreamExt};
 use output::{
-    analysis::analyze_processes,
+    analysis::{analyze_processes, analyze_windows},
     extract_between,
     sliding_grouping::{sliding_interval_grouping, SlidingInterval, TimeOption},
 };
@@ -44,14 +44,14 @@ enum Args {
     // StopProcess {
     //     pid: u32,
     // },
-    Today {
+    Timeline {
         #[command(flatten)]
-        command: TodayCommand,
+        command: TimelineCommand,
     },
 }
 
 #[derive(Debug, Parser)]
-struct TodayCommand {
+struct TimelineCommand {
     #[arg(long, short)]
     start: Option<DateTimeUtc>,
     #[arg(long, short)]
@@ -62,6 +62,11 @@ struct TodayCommand {
     interval: PrintInterval,
     #[arg(short = 'p', long = "percentage", default_value_t = Percentage::new_opt(10.).unwrap())]
     min_percentage: Percentage,
+    #[arg(short, long = "window", default_value_t = false)]
+    use_window_name: bool,
+
+    #[arg(short, long, help = "Include afk time")]
+    afk: bool
 }
 
 #[derive(Parser, Debug)]
@@ -88,9 +93,7 @@ pub struct PrintInterval {
     option: TimeOption,
 }
 
-#[instrument(level = "error")]
 pub async fn run_cli() -> Result<()> {
-    info!("Hello there");
     let args = Args::parse();
 
     dbg!(&args);
@@ -110,22 +113,20 @@ pub async fn run_cli() -> Result<()> {
             start_daemon(application_default_path()?).await?;
             Ok(())
         }
-        // Args::StopProcess { pid } => {
-        // terminate_app(pid)?;
-        //     Ok(())
-        // }
-        Args::Today { command } => process_today(command).await,
+        Args::Timeline { command } => process_timeline_command(command).await,
     }
 }
 
-async fn process_today(
-    TodayCommand {
+async fn process_timeline_command(
+    TimelineCommand {
         start,
         end,
         interval,
         treat_as_days,
         min_percentage,
-    }: TodayCommand,
+        use_window_name,
+        afk
+    }: TimelineCommand,
 ) -> Result<()> {
     let Some(interval) = SlidingInterval::new_opt(interval.duration, interval.option) else {
         return Err(Args::command()
@@ -157,58 +158,104 @@ async fn process_today(
     let results = extract_between(
         application,
         output::PrintConfig {
-            with_afk: false,
+            with_afk: afk,
             start: start.into(),
             end: end.into(),
         },
     );
 
-    let v = sliding_interval_grouping::<_, Local>(results, interval, |v| {
-        analyze_processes(v, min_shown_duration)
+    if use_window_name {
+        print_window_grouping(interval, min_shown_duration, results).await?;
+    } else {
+        print_processes_grouping(interval, min_shown_duration, results).await?;
+    }
+    Ok(())
+}
+
+async fn print_processes_grouping(
+    interval: SlidingInterval,
+    min_shown_duration: TimeDelta,
+    results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
+) -> Result<()> {
+    let intervals = sliding_interval_grouping::<_, Local>(results, interval, |v| {
+        analyze_processes(v, interval.as_duration(), min_shown_duration)
     })
     .await?;
-
-    for (time, value) in v {
-        let Some(v) = value else {
+    for (time, value) in intervals {
+        let Some(analyzed) = value else {
             continue;
         };
 
         let time = time.with_timezone(&Local);
 
-        println!("{}", time.format("%D:%H:%M:%S"),);
+        if analyzed.is_empty() {
+            println!("{}", time.format("%D %H:%M:%S"),);
+        } else {
+            let mut overall = Duration::zero();
+            for usage in analyzed {
+                println!(
+                    "{}\t{}%\t{}\t{}",
+                    time.format("%D %H:%M:%S"),
+                    *interval.percentage_for(usage.duration) as i32,
+                    format_duration(usage.duration),
+                    clean_process_name(&usage.process_name)
+                );
+                overall += usage.duration
+            }
+            // println!("{}\t{}%\t{}\tInactive", time.format("%D %H:%M:%S"), *interval.percentage_for(overall) as i32, format_duration(overall));
+        }
+        println!();
+    }
+    Ok(())
+}
 
-        for usage in v {
+async fn print_window_grouping(
+    interval: SlidingInterval,
+    min_shown_duration: TimeDelta,
+    results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
+) -> Result<()> {
+    let intervals = sliding_interval_grouping::<_, Local>(results, interval, |v| {
+        analyze_windows(v, min_shown_duration)
+    })
+    .await?;
+    for (time, value) in intervals {
+        let Some(analyzed) = value else {
+            continue;
+        };
+
+        let time = time.with_timezone(&Local);
+
+        if analyzed.is_empty() {
+            println!("{}", time.format("%D %H:%M:%S"),);
+        }
+
+        for usage in analyzed {
             println!(
-                "{}\t{}%\t{}\t{}",
-                time.format("%D:%H:%M:%S"),
+                "{}\t{}%\t{}\t{}\t{}",
+                time.format("%D %H:%M:%S"),
                 *interval.percentage_for(usage.duration) as u32,
-                usage.duration,
-                clean_process_name(&usage.name)
+                format_duration(usage.duration),
+                clean_process_name(&usage.process_name),
+                usage.window_name,
             );
         }
         println!();
     }
-    // let mut results = std::pin::pin!(results);
-    // while let Some(v) = results.next().await {
-    //     match v {
-    //         Ok(v) => {
-    //             print_interval(v);
-    //         }
-    //         Err(e) => {
-    //             println!("Encountered an error {e}")
-    //         }
-    //     }
-    // }
     Ok(())
 }
 
 fn format_duration(v: Duration) -> String {
     if v.num_hours() > 0 {
-        format!("{} hours {} minutes", v.num_hours(), v.num_minutes() % 60)
+        format!(
+            "{}h{}m{}s",
+            v.num_hours(),
+            v.num_minutes() % 60,
+            v.num_seconds() % 60
+        )
     } else if v.num_minutes() > 0 {
-        format!("{} minutes", v.num_minutes())
+        format!("{}m{}s", v.num_minutes() % 60, v.num_seconds() % 60)
     } else {
-        format!("{} seconds", v.num_seconds())
+        format!("{}s", v.num_seconds() % 60)
     }
 }
 

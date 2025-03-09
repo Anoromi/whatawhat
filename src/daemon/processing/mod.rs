@@ -3,19 +3,19 @@ use module::EventProcessor;
 use tokio::sync::mpsc::Receiver;
 use tracing::debug;
 
-use super::{pipeline_event::PipeEvent, storage::record_event::Record};
+use super::{pipeline_event::PipeEvent, storage::record_event::RecordEvent};
 
 pub mod combined_processing;
 pub mod local_save;
 pub mod module;
 
 pub struct ProcessingModule<Processor> {
-    receiver: Receiver<PipeEvent<Record>>,
+    receiver: Receiver<PipeEvent<RecordEvent>>,
     processor: Processor,
 }
 
 impl<P: EventProcessor> ProcessingModule<P> {
-    pub fn new(receiver: Receiver<PipeEvent<Record>>, processor: P) -> Self {
+    pub fn new(receiver: Receiver<PipeEvent<RecordEvent>>, processor: P) -> Self {
         Self {
             receiver,
             processor,

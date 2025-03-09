@@ -5,7 +5,7 @@ use anyhow::Result;
 use crate::{
     daemon::storage::{
         entities::UsageRecordEntity,
-        record_event::Record,
+        record_event::RecordEvent,
         record_storage::{ColorIndexStorage, RecordFileHandle, RecordStorage},
     },
     utils::date_provider::DateTimeProvider,
@@ -34,31 +34,28 @@ impl<R: RecordStorage, Cs> LocalSaver<R, Cs> {
         let current_file = self.current_handle.take();
         let now = self.date_provider.deref_mut()().date_naive();
         println!("now {now}");
-        
+
         match current_file {
-            // This shouldn't be the responsibility of LocalSaver.
-            // TODO detach it somewhere
             Some(mut file) if file.get_date() != now => {
                 file.flush().await?;
+                // This shouldn't be the responsibility of LocalSaver.
+                // TODO detach it somewhere
                 self.records_storage.compact_file(file).await?
-            },
+            }
             Some(v) => return Ok(v),
             None => {}
         };
         self.records_storage.create_or_append_record(now).await
     }
-
-
 }
 
 impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalSaver<R, Cs> {
-    
-    async fn process_next(&mut self, message: Record) -> anyhow::Result<()> {
+    async fn process_next(&mut self, message: RecordEvent) -> anyhow::Result<()> {
         let mut active_file = self.move_file_handle().await?;
 
         if let Some(color) = message.color {
             self.color_storage
-                .add_element(message.process_name.as_ref(), color)
+                .update_color_index(message.process_name.as_ref(), color)
                 .await?;
         }
 
@@ -75,7 +72,10 @@ impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalSaver<R, C
     }
 
     async fn finalize(&mut self) -> anyhow::Result<()> {
-        self.color_storage.finalize().await?;
+        if let Some(v) = self.current_handle.as_mut() {
+            v.flush();
+        }
+        self.color_storage.flush().await?;
         Ok(())
     }
 }

@@ -2,6 +2,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     future::Future,
     io::ErrorKind,
+    ops::{Deref, DerefMut},
     path::{Path, PathBuf},
     time::Duration,
 };
@@ -10,7 +11,10 @@ use anyhow::Result;
 use chrono::NaiveDate;
 use tokio::{
     fs::File,
-    io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt, AsyncWrite, AsyncWriteExt, BufReader},
+    io::{
+        AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt, AsyncWrite,
+        AsyncWriteExt, BufReader,
+    },
 };
 use tracing::warn;
 
@@ -24,6 +28,7 @@ use super::{
     record_event::Color,
 };
 
+/// Intended for abstracting operations for saving the records in a directory
 pub trait RecordStorage {
     type RecordFile: RecordFileHandle;
 
@@ -40,13 +45,46 @@ pub trait RecordStorage {
         &self,
         date: NaiveDate,
     ) -> impl Future<Output = Result<Vec<UsageIntervalEntity>>> + Send;
-
 }
 
-pub trait IndexStorage {
+impl<T: Deref> RecordStorage for T
+where
+    T::Target: RecordStorage,
+{
+    type RecordFile = <T::Target as RecordStorage>::RecordFile;
+
+    fn compact_files(&self) -> impl Future<Output = Result<()>> {
+        self.deref().compact_files()
+    }
+
+    fn create_or_append_record(
+        &self,
+        date: NaiveDate,
+    ) -> impl Future<Output = Result<Self::RecordFile>> {
+        self.deref().create_or_append_record(date)
+    }
+
+    fn get_data_for(
+        &self,
+        date: NaiveDate,
+    ) -> impl Future<Output = Result<Vec<UsageIntervalEntity>>> + Send {
+        self.deref().get_data_for(date)
+    }
+}
+
+/// Intended for future use to store colors
+pub trait ColorIndexStorage {
+    fn recover_shutdown(
+        &self,
+    ) -> impl Future<Output = Result<()>>;
+
+    fn flush(
+        &self,
+    ) -> impl Future<Output = Result<()>>;
+
     fn update_color_index(
         &self,
-        process_name: String,
+        process_name: &str,
         color: Color,
     ) -> impl Future<Output = Result<()>>;
 
@@ -60,12 +98,7 @@ pub trait RecordFileHandle {
     fn append(&mut self, usage_records: Vec<UsageRecordEntity>)
         -> impl Future<Output = Result<()>>;
     fn get_date(&self) -> NaiveDate;
-    fn flush(&mut self)  -> impl Future<Output = Result<()>>;
-}
-
-pub trait ColorIndexStorage {
-    fn add_element(&self, key: &str, value: Color) -> impl Future<Output = Result<()>>;
-    fn finalize(&self) -> impl Future<Output = Result<()>>;
+    fn flush(&mut self) -> impl Future<Output = Result<()>>;
 }
 
 pub struct RecordStorageImpl {
@@ -168,7 +201,7 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> RecordFileHandle
         self.date
     }
 
-    async fn flush(&mut self)  -> Result<()> {
+    async fn flush(&mut self) -> Result<()> {
         Ok(())
     }
 }
@@ -179,7 +212,6 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> UsageIntervalReco
     }
 
     async fn extract_line_backwards(file: &mut F) -> Result<String, anyhow::Error> {
-        
         seek_line_backwards(file, &mut vec![0; 1024]).await?;
         let mut last_line = String::new();
         file.read_to_string(&mut last_line).await?;
@@ -262,71 +294,81 @@ fn collapse_records(
 mod tests {
     use std::io::Cursor;
 
-    use chrono::{Duration, Utc};
-    use tempfile::tempfile;
+    use anyhow::Result;
+    use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
+    use tempfile::{tempdir, tempfile};
     use tokio::{
         fs::File,
         io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt},
     };
 
-    use crate::daemon::storage::entities::{UsageIntervalEntity, UsageRecordEntity};
+    use crate::daemon::storage::{
+        entities::{UsageIntervalEntity, UsageRecordEntity},
+        record_storage::{RecordFileHandle, RecordStorage, RecordStorageImpl},
+    };
 
     use super::UsageIntervalRecordFile;
 
+    const START_DATE: NaiveDateTime =
+        NaiveDateTime::new(NaiveDate::from_ymd_opt(2018, 7, 4).unwrap(), NaiveTime::MIN);
+
     #[tokio::test]
-    async fn test_appender() {
-        let mut previous = serde_json::to_string(&UsageIntervalEntity {
-            window_name: "initial".into(),
-            process_name: "initial".into(),
-            start: Utc::now() - Duration::seconds(2),
-            duration: Duration::seconds(1),
-            afk: false,
-        })
-        .unwrap();
-
-        previous.push('\n');
-
-        previous += &serde_json::to_string(&UsageIntervalEntity {
-            window_name: "window".into(),
-            process_name: "process".into(),
-            start: Utc::now() - Duration::seconds(2),
-            duration: Duration::seconds(1),
-            afk: true,
-        })
-        .unwrap();
-        previous += "\n";
-
-        let mut file = Cursor::new(previous.into_bytes());
-        file.seek(std::io::SeekFrom::End(0)).await.unwrap();
+    async fn test_appender_basic() -> Result<()> {
+        let file = Cursor::new(Vec::new());
 
         let mut usage = UsageIntervalRecordFile::new(file, Utc::now().date_naive());
+        usage
+            .append_inner(vec![UsageRecordEntity {
+                window_name: "initial".into(),
+                process_name: "initial".into(),
+                moment: Utc.from_utc_datetime(&START_DATE),
+                afk: false,
+            }])
+            .await?;
 
         usage
             .append_inner(vec![UsageRecordEntity {
                 window_name: "window".into(),
                 process_name: "process".into(),
-                moment: Utc::now(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(1),
                 afk: true,
             }])
-            .await
-            .unwrap();
+            .await?;
 
-        usage.file.rewind().await.unwrap();
+        usage
+            .append_inner(vec![UsageRecordEntity {
+                window_name: "third".into(),
+                process_name: "process".into(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(2),
+                afk: true,
+            }])
+            .await?;
+
+        usage
+            .append_inner(vec![UsageRecordEntity {
+                window_name: "third".into(),
+                process_name: "process".into(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(3),
+                afk: true,
+            }])
+            .await?;
+
+        usage.file.rewind().await?;
         let mut s = String::new();
-        usage.file.read_to_string(&mut s).await.unwrap();
-        assert_eq!(s.lines().count(), 2);
+        usage.file.read_to_string(&mut s).await?;
+        assert_eq!(s.lines().count(), 3);
+        Ok(())
     }
 
     #[tokio::test]
-    async fn test_file_appender() {
+    async fn test_appender_overwrite() -> Result<()> {
         let mut previous = serde_json::to_string(&UsageIntervalEntity {
             window_name: "initial".into(),
             process_name: "initial".into(),
             start: Utc::now() - Duration::seconds(2),
             duration: Duration::seconds(1),
             afk: false,
-        })
-        .unwrap();
+        })?;
 
         previous.push('\n');
 
@@ -336,16 +378,11 @@ mod tests {
             start: Utc::now() - Duration::seconds(2),
             duration: Duration::seconds(1),
             afk: true,
-        })
-        .unwrap();
+        })?;
         previous += "\n";
 
-        let file = tempfile().unwrap();
-        let mut file = File::from_std(file);
-
-        file.write_all(previous.as_bytes()).await.unwrap();
-
-        file.seek(std::io::SeekFrom::End(0)).await.unwrap();
+        let mut file = Cursor::new(previous.into_bytes());
+        file.seek(std::io::SeekFrom::End(0)).await?;
 
         let mut usage = UsageIntervalRecordFile::new(file, Utc::now().date_naive());
 
@@ -356,12 +393,93 @@ mod tests {
                 moment: Utc::now(),
                 afk: true,
             }])
-            .await
-            .unwrap();
+            .await?;
 
-        usage.file.rewind().await.unwrap();
+        usage.file.rewind().await?;
         let mut s = String::new();
-        usage.file.read_to_string(&mut s).await.unwrap();
+        usage.file.read_to_string(&mut s).await?;
         assert_eq!(s.lines().count(), 2);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_record_storage_basic() -> Result<()> {
+        let dir = tempdir()?;
+        let storage = RecordStorageImpl::new(dir.path().to_owned())?;
+        let mut record = storage.create_or_append_record(START_DATE.date()).await?;
+        let records = [
+            UsageRecordEntity {
+                window_name: "test".into(),
+                process_name: "test process".into(),
+                moment: Utc.from_utc_datetime(&START_DATE),
+                afk: false,
+            },
+            UsageRecordEntity {
+                window_name: "test 2".into(),
+                process_name: "test process 2".into(),
+                moment: Utc.from_utc_datetime(&START_DATE),
+                afk: false,
+            },
+        ];
+        record.append_inner(vec![records[0].clone()]).await?;
+
+        record.append_inner(vec![records[1].clone()]).await?;
+
+        record.flush().await?;
+
+        let values = storage.get_data_for(START_DATE.into()).await?;
+
+        assert_eq!(
+            values,
+            vec![records[0].clone().into(), records[1].clone().into()]
+        );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_record_storage_appending() -> Result<()> {
+        let dir = tempdir()?;
+        let storage = RecordStorageImpl::new(dir.path().to_owned())?;
+        let mut record = storage.create_or_append_record(START_DATE.date()).await?;
+        let records = [
+            UsageRecordEntity {
+                window_name: "test".into(),
+                process_name: "test process".into(),
+                moment: Utc.from_utc_datetime(&START_DATE),
+                afk: false,
+            },
+            UsageRecordEntity {
+                window_name: "test 2".into(),
+                process_name: "test process 2".into(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(1),
+                afk: false,
+            },
+            UsageRecordEntity {
+                window_name: "test 2".into(),
+                process_name: "test process 2".into(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(5),
+                afk: false,
+            },
+        ];
+        record.append_inner(vec![records[0].clone()]).await?;
+
+        record.append_inner(vec![records[1].clone()]).await?;
+
+        record.append_inner(vec![records[2].clone()]).await?;
+
+        record.flush().await?;
+
+        let values = storage.get_data_for(START_DATE.into()).await?;
+
+        assert_eq!(
+            values,
+            vec![
+                records[0].clone().into(),
+                UsageIntervalEntity::from(records[1].clone()).with_duration(Duration::seconds(4))
+            ]
+        );
+
+        Ok(())
     }
 }

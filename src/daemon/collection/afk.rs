@@ -3,7 +3,7 @@ pub struct AfkEvaluator {
 }
 
 impl AfkEvaluator {
-    pub fn from_s(threshold_s: u32) -> Self {
+    pub fn from_seconds(threshold_s: u32) -> Self {
         Self { threshold_ms: threshold_s * 1000 }
     }
 

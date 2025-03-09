@@ -4,7 +4,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Record {
+pub struct RecordEvent {
     pub timestamp: chrono::DateTime<Utc>,
     pub window_name: Arc<str>,
     pub process_name: Arc<str>,

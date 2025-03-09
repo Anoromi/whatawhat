@@ -1,7 +1,7 @@
 use anyhow::Result;
 use tokio::join;
 
-use crate::daemon::storage::record_event::Record;
+use crate::daemon::storage::record_event::RecordEvent;
 
 use super::module::EventProcessor;
 
@@ -22,7 +22,7 @@ impl CombinedProcessor<(), ()> {
 }
 
 impl<A: EventProcessor, B: EventProcessor> EventProcessor for CombinedProcessor<A, B> {
-    fn process_next(&mut self, message: Record) -> impl std::future::Future<Output = Result<()>> {
+    fn process_next(&mut self, message: RecordEvent) -> impl std::future::Future<Output = Result<()>> {
         self.value.process_next(message)
     }
 
@@ -44,7 +44,7 @@ impl<A: EventProcessor, B: EventProcessor> CombinedProcessor<A, B> {
 }
 
 impl EventProcessor for () {
-    async fn process_next(&mut self, _: Record) -> Result<()> {
+    async fn process_next(&mut self, _: RecordEvent) -> Result<()> {
         Ok(())
     }
 
@@ -54,7 +54,7 @@ impl EventProcessor for () {
 }
 
 impl<A: EventProcessor, B: EventProcessor> EventProcessor for (A, B) {
-    async fn process_next(&mut self, message: Record) -> Result<()> {
+    async fn process_next(&mut self, message: RecordEvent) -> Result<()> {
         let result = join! {
             self.0.process_next(message.clone()),
             self.1.process_next(message)

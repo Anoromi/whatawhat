@@ -63,6 +63,10 @@ impl UsageIntervalEntity {
     ) -> Option<UsageIntervalEntity> {
         self.split_by(from).1.and_then(|v| v.split_by(to).0)
     }
+
+    pub fn with_duration(self, duration: Duration) -> Self {
+        Self { duration, ..self }
+    }
 }
 
 mod duration_ser {

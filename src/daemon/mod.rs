@@ -5,9 +5,12 @@ use collection::{afk::AfkEvaluator, collector::DataCollectionModule};
 use pipeline_event::PipeEvent;
 use processing::{local_save::LocalSaver, ProcessingModule};
 use storage::{
-    record_event::Record, record_storage::{ColorIndexStorage, RecordStorageImpl}
+    record_event::RecordEvent,
+    record_storage::{ColorIndexStorage, RecordStorageImpl},
 };
 use tokio::sync::mpsc;
+use tokio_util::sync::CancellationToken;
+use tracing::error;
 
 use crate::windows_api::{GenericWindowManager, WindowManager};
 
@@ -20,12 +23,16 @@ pub mod update;
 const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(1);
 
 pub async fn start_daemon(dir: PathBuf) -> Result<()> {
-    let (sender, receiver) = mpsc::channel::<PipeEvent<Record>>(10);
+    let (sender, receiver) = mpsc::channel::<PipeEvent<RecordEvent>>(10);
     let manager = GenericWindowManager::new()?;
+
+    let shudown_token = CancellationToken::new();
+
     let collector = DataCollectionModule::new(
         sender,
         Box::new(manager) as Box<dyn WindowManager>,
-        AfkEvaluator::from_s(60 * 2),
+        shudown_token.clone(),
+        AfkEvaluator::from_seconds(60 * 2),
         DEFAULT_COLLECTION_INTERVAL,
         Box::new(chrono::Utc::now),
     );
@@ -33,31 +40,26 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
 
     let saver = LocalSaver::new(storage, NoColorIndex, Box::new(chrono::Utc::now));
     let processing = ProcessingModule::new(receiver, saver);
-    //let
-    // let service_execution = tokio::join![processing.start()];
-    // service_execution.0?;
 
-    tokio::select! {
-        v = update::detect_messages() => {
-            v?;
-        }
-        v = processing.run() => {
-            v?;
-        }
-        v = collector.run() => {
-            v?;
-        }
+    let (_, collection_result, processing_result) = tokio::join!(
+        update::detect_shutdown(shudown_token),
+        collector.run(),
+        processing.run(),
+    );
 
+    if let Err(collection_result) = collection_result {
+        error!(
+            "Collection module resulted in an error {}",
+            collection_result
+        );
     }
-    // tokio::select! {
-    //     _ => processing.run(), collector.run()};
-    // let (a, b, c) = tokio::join!{
-    //     update::detect_messages(), processing.run(), collector.run()
-    // };
-    //
-    // a?;
-    // b?;
-    // c?;
+
+    if let Err(processing_result) = processing_result {
+        error!(
+            "Processing module resulted in an error {}",
+            processing_result
+        );
+    }
 
     Ok(())
 }
@@ -65,11 +67,30 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
 struct NoColorIndex;
 
 impl ColorIndexStorage for NoColorIndex {
-    async fn add_element(&self, key: &str, value: storage::record_event::Color) -> Result<()> {
+    async fn recover_shutdown(
+        &self,
+    ) -> Result<()> {
         Ok(())
     }
 
-    async fn finalize(&self) -> Result<()> {
+    async fn flush(
+        &self,
+    ) -> Result<()> {
         Ok(())
+    }
+
+    async fn update_color_index(
+        &self,
+        _process_name: &str,
+        _color: storage::record_event::Color,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    async fn get_colors_for(
+        &self,
+        _names: std::collections::BTreeSet<String>,
+    ) -> Result<std::collections::BTreeMap<String, Option<storage::record_event::Color>>> {
+        Ok(Default::default())
     }
 }

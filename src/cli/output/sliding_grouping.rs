@@ -154,6 +154,7 @@ where
     let mut collected: Vec<(DateTime<Utc>, Option<T>)> = vec![];
 
     let mut backlog: Option<UsageIntervalEntity> = Some(first);
+    println!("Start end {collapse_start} {collapse_end}");
     while let CollapseResult::Values {
         backlog: updated_backlog,
         data,
@@ -324,23 +325,5 @@ mod clean_time_tests {
             &SlidingInterval::new_opt(15, super::TimeOption::Seconds).unwrap(),
             NaiveTime::from_hms_opt(4, 24, 45).unwrap(),
         );
-    }
-
-    #[test]
-    fn test_day_end() {
-        let mut h = Local
-            .from_local_datetime(&NaiveDateTime::new(
-                NaiveDate::from_ymd_opt(2025, 10, 26).unwrap(),
-                NaiveTime::from_hms_opt(5, 24, 5).unwrap(),
-            ))
-            .unwrap();
-        for v in 0..20 {
-            h -= Duration::minutes(30);
-            println!("{}", h.with_time(NaiveTime::MIN).unwrap())
-        }
-        // let h = h - Duration::hours(6);
-        panic!("{}", h);
-
-        // h.with_time(NaiveTime::from_hms_nano_opt(hour, min, sec, nano))
     }
 }

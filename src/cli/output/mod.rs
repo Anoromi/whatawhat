@@ -18,8 +18,8 @@ pub struct PrintConfig {
 
 impl PrintConfig {
     fn filter(&self, entity: UsageIntervalEntity) -> Option<UsageIntervalEntity> {
-        if !self.with_afk && entity.afk  {
-            return None
+        if !self.with_afk && entity.afk {
+            return None;
         }
         entity.filter_by_interval(self.start, self.end)
     }
@@ -33,9 +33,10 @@ pub fn extract_between(
     let start = print_config.start;
     let end = print_config.end;
 
-    let pipe = tokio_stream::iter(DateRangeIter::new(start.date_naive(), end.date_naive()));
 
-    let files = pipe
+    let date_iteration = date_range(start.date_naive(), end.date_naive());
+
+    let files = date_iteration
         .map(move |day| {
             let storage = storage.clone();
             async move { (day, storage.get_data_for(day).await) }
@@ -50,42 +51,32 @@ pub fn extract_between(
                 stream::once(future::ready(Err(e))).boxed()
             }
         })
-        .filter_map(move |v| {
-            future::ready(
-                v.map(|v| print_config.filter(v)).transpose() 
-            )
-        });
+        .filter_map(move |v| future::ready(v.map(|v| print_config.filter(v)).transpose()));
 
     result
 }
 
-struct DateRangeIter {
-    current: NaiveDate,
-    end: NaiveDate,
+fn date_range(start: NaiveDate, end: NaiveDate) -> impl Stream<Item = NaiveDate> {
+    stream::unfold(
+        (start, end),
+        |(mut current, end)| {
+            future::ready({
+                if current <= end {
+                    let last_current = current;
+                    current = current.succ_opt().expect("End of time should never happen");
+                    Some(((last_current), (current, end)))
+                } else {
+                    None
+                }
+            })
+        },
+    )
 }
 
-impl DateRangeIter {
-    fn new(start: NaiveDate, end: NaiveDate) -> Self {
-        Self {
-            current: start,
-            end,
-        }
-    }
-}
-
-impl Iterator for DateRangeIter {
-    type Item = NaiveDate;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current <= self.end {
-            let current = self.current;
-            self.current = self
-                .current
-                .succ_opt()
-                .expect("End of time should never happen");
-            Some(current)
-        } else {
-            None
-        }
-    }
-}
+// #[cfg(test)]
+// mod tests {
+//
+//
+//     #[test]
+//     fn test_build
+// }
