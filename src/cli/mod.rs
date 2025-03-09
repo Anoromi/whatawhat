@@ -179,9 +179,10 @@ async fn process_today(
 
         for usage in v {
             println!(
-                "{}\t{}\t{}",
+                "{}\t{}%\t{}\t{}",
                 time.format("%D:%H:%M:%S"),
-                interval.percentage_for(usage.duration),
+                *interval.percentage_for(usage.duration) as u32,
+                usage.duration,
                 clean_process_name(&usage.name)
             );
         }
@@ -246,6 +247,7 @@ pub fn application_default_path() -> Result<PathBuf> {
             let mut path =
                 PathBuf::from(env::var("APPDATA").expect("APPDATA should be present on Windows"));
             path.push("whatawhat");
+            path
         }
         #[cfg(target_os = "linux")]
         {
@@ -261,6 +263,6 @@ pub fn application_default_path() -> Result<PathBuf> {
     match std::fs::create_dir(&path) {
         Ok(_) => Ok(path),
         Err(v) if v.kind() == io::ErrorKind::AlreadyExists => Ok(path),
-        Err(v) => return Err(v.into()),
+        Err(v) => Err(v.into()),
     }
 }
