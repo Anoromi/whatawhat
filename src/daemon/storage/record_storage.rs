@@ -304,7 +304,7 @@ mod tests {
 
     use crate::daemon::storage::{
         entities::{UsageIntervalEntity, UsageRecordEntity},
-        record_storage::{RecordFileHandle, RecordStorage, RecordStorageImpl},
+        record_storage::{collapse_records, RecordFileHandle, RecordStorage, RecordStorageImpl},
     };
 
     use super::UsageIntervalRecordFile;
@@ -484,5 +484,44 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_record_collapsing_basic() -> Result<()> {
+        let records = [
+            UsageRecordEntity {
+                window_name: "test".into(),
+                process_name: "test process".into(),
+                moment: Utc.from_utc_datetime(&START_DATE),
+                afk: false,
+            },
+            UsageRecordEntity {
+                window_name: "test 2".into(),
+                process_name: "test process 2".into(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(1),
+                afk: false,
+            },
+            UsageRecordEntity {
+                window_name: "test 2".into(),
+                process_name: "test process 2".into(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(5),
+                afk: false,
+            },
+        ];
+        let values = collapse_records(None, records.clone());
+
+        assert_eq!(values.len(), 2);
+        assert_eq!(
+            values,
+            vec![
+                records[0].clone().into(),
+                UsageIntervalEntity::from(records[1].clone())
+                    .with_start(records[0].moment)
+                    .with_duration(Duration::seconds(5))
+            ]
+        );
+
+        Ok(())
+    }
+
 
 }

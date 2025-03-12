@@ -1,20 +1,14 @@
-use std::{
-    env,
-    path::Path,
-};
+use std::{env, path::Path};
 
 use anyhow::Result;
-use sysinfo::{get_current_pid, System};
-use tracing::info;
+use sysinfo::{get_current_pid, Signal, System};
 
+use crate::cli::Args;
 
 pub fn kill_previous_servers(name: &Path) {
     let system = System::new_all();
     let current_id = get_current_pid().unwrap();
     for (pid, process) in system.processes().iter() {
-        // println!("Process {:?}", process.exe());
-        // println!("This id {:?}", this_pid);
-        // println!("This id {:?}", process);
         if *pid == current_id {
             continue;
         }
@@ -28,23 +22,11 @@ pub fn kill_previous_servers(name: &Path) {
             .filter(|v| name == *v)
             .is_some()
         {
-            // after extensive investigation creating another process to kill (for both Windows and
-            // Linux) seemed like the best option
-            let process_name = env::current_exe().expect("Can't operate without an excutable");
-            let mut command = std::process::Command::new(process_name);
-            command.args(["stop-process", &pid.as_u32().to_string()]);
-            command.spawn().unwrap().wait().unwrap();
-
-
-            // let v = Proce
-            // gracefuly_terminate(pid.as_u32()).inspect_err(|e| {
-            //     error!("{:?} {}", e, e.backtrace());
-            // });
-            info!("Waiting to die");
-
-            // TODO Gracefuly kill
-            // process.kill_with(Signal::Term);
-            // process.kill();
+            // This will forcefully terminate the proces on Windows. Anything better will require a
+            // lot more work.
+            if process.kill_with(Signal::Term).is_none() {
+                process.kill();
+            }
             process.wait();
         }
     }
@@ -53,9 +35,10 @@ pub fn kill_previous_servers(name: &Path) {
 /// Intended for shutting down previous server and starting new one. Currently for simplicity sake
 /// it operates using a detached process. This is not great but it's not as hard to configure.
 pub fn restart_server() -> Result<()> {
+    // The program use executable passed into the process. It's not the best option but it will do
+    // the job in most cases.
     let process_name = env::current_exe().expect("Can't operate without an excutable");
-    // TODO
-    // kill_previous_servers(&process_name);
+    kill_previous_servers(&process_name);
     let mut command = std::process::Command::new(process_name);
     command.args(["serve"]);
 
@@ -63,7 +46,6 @@ pub fn restart_server() -> Result<()> {
     {
         use std::os::windows::process::CommandExt;
         use windows::Win32::System::Threading::DETACHED_PROCESS;
-
         command.creation_flags(DETACHED_PROCESS.0);
     }
     #[cfg(unix)]

@@ -33,12 +33,12 @@ use crate::{
 #[command(version, about, long_about = None)]
 enum Args {
     Init {
-        #[clap(flatten)]
-        default_params: DaemonParams,
+        #[arg(long)]
+        dir: Option<PathBuf>,
     },
     Serve {
-        #[clap(flatten)]
-        default_params: DaemonParams,
+        #[arg(long)]
+        dir: Option<PathBuf>,
     },
     Stop {},
     // StopProcess {
@@ -177,11 +177,9 @@ async fn print_processes_grouping(
     min_shown_duration: TimeDelta,
     results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
 ) -> Result<()> {
-    let intervals = sliding_interval_grouping::<_, Local>(
-        results,
-        interval,
-        |v| analyze_processes(v, interval.as_duration(), min_shown_duration),
-    )
+    let intervals = sliding_interval_grouping::<_, Local>(results, interval, |v| {
+        analyze_processes(v, interval.as_duration(), min_shown_duration)
+    })
     .await?;
     for (time, value) in intervals {
         let Some(analyzed) = value else {
