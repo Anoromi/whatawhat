@@ -12,7 +12,10 @@ use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::error;
 
-use crate::windows_api::{GenericWindowManager, WindowManager};
+use crate::{
+    utils::date_provider::DefaultClock,
+    windows_api::{GenericWindowManager, WindowManager},
+};
 
 pub mod collection;
 pub mod pipeline_event;
@@ -22,6 +25,8 @@ pub mod update;
 
 const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(1);
 
+
+/// Represents the starting point for the daemon
 pub async fn start_daemon(dir: PathBuf) -> Result<()> {
     let (sender, receiver) = mpsc::channel::<PipeEvent<RecordEvent>>(10);
     let manager = GenericWindowManager::new()?;
@@ -34,11 +39,12 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
         shudown_token.clone(),
         AfkEvaluator::from_seconds(60 * 2),
         DEFAULT_COLLECTION_INTERVAL,
-        Box::new(chrono::Utc::now),
+        Box::new(DefaultClock),
     );
+
     let storage = RecordStorageImpl::new(dir.join("records"))?;
 
-    let saver = LocalSaver::new(storage, NoColorIndex, Box::new(chrono::Utc::now));
+    let saver = LocalSaver::new(storage, NoColorIndex, Box::new(DefaultClock));
     let processing = ProcessingModule::new(receiver, saver);
 
     let (_, collection_result, processing_result) = tokio::join!(
@@ -67,15 +73,11 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
 struct NoColorIndex;
 
 impl ColorIndexStorage for NoColorIndex {
-    async fn recover_shutdown(
-        &self,
-    ) -> Result<()> {
+    async fn recover_shutdown(&self) -> Result<()> {
         Ok(())
     }
 
-    async fn flush(
-        &self,
-    ) -> Result<()> {
+    async fn flush(&self) -> Result<()> {
         Ok(())
     }
 

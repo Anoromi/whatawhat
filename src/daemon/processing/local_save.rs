@@ -7,8 +7,7 @@ use crate::{
         entities::UsageRecordEntity,
         record_event::RecordEvent,
         record_storage::{ColorIndexStorage, RecordFileHandle, RecordStorage},
-    },
-    utils::date_provider::DateTimeProvider,
+    }, utils::date_provider::Clock,
 };
 
 use super::module::EventProcessor;
@@ -17,11 +16,11 @@ pub struct LocalSaver<R: RecordStorage, Cs> {
     records_storage: R,
     current_handle: Option<R::RecordFile>,
     color_storage: Cs,
-    date_provider: DateTimeProvider,
+    date_provider: Box<dyn Clock>,
 }
 
 impl<R: RecordStorage, Cs> LocalSaver<R, Cs> {
-    pub fn new(records_storage: R, color_storage: Cs, date_provider: DateTimeProvider) -> Self {
+    pub fn new(records_storage: R, color_storage: Cs, date_provider: Box<dyn Clock>) -> Self {
         Self {
             records_storage,
             current_handle: None,
@@ -32,7 +31,7 @@ impl<R: RecordStorage, Cs> LocalSaver<R, Cs> {
 
     async fn move_file_handle(&mut self) -> Result<R::RecordFile> {
         let current_file = self.current_handle.take();
-        let now = self.date_provider.deref_mut()().date_naive();
+        let now = self.date_provider.time().date_naive();
         println!("now {now}");
 
         match current_file {
@@ -73,7 +72,7 @@ impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalSaver<R, C
 
     async fn finalize(&mut self) -> anyhow::Result<()> {
         if let Some(v) = self.current_handle.as_mut() {
-            v.flush();
+            v.flush().await?;
         }
         self.color_storage.flush().await?;
         Ok(())

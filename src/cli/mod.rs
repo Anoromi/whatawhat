@@ -66,7 +66,7 @@ struct TimelineCommand {
     use_window_name: bool,
 
     #[arg(short, long, help = "Include afk time")]
-    afk: bool
+    afk: bool,
 }
 
 #[derive(Parser, Debug)]
@@ -125,7 +125,7 @@ async fn process_timeline_command(
         treat_as_days,
         min_percentage,
         use_window_name,
-        afk
+        afk,
     }: TimelineCommand,
 ) -> Result<()> {
     let Some(interval) = SlidingInterval::new_opt(interval.duration, interval.option) else {
@@ -177,9 +177,11 @@ async fn print_processes_grouping(
     min_shown_duration: TimeDelta,
     results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
 ) -> Result<()> {
-    let intervals = sliding_interval_grouping::<_, Local>(results, interval, |v| {
-        analyze_processes(v, interval.as_duration(), min_shown_duration)
-    })
+    let intervals = sliding_interval_grouping::<_, Local>(
+        results,
+        interval,
+        |v| analyze_processes(v, interval.as_duration(), min_shown_duration),
+    )
     .await?;
     for (time, value) in intervals {
         let Some(analyzed) = value else {

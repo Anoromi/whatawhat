@@ -74,13 +74,9 @@ where
 
 /// Intended for future use to store colors
 pub trait ColorIndexStorage {
-    fn recover_shutdown(
-        &self,
-    ) -> impl Future<Output = Result<()>>;
+    fn recover_shutdown(&self) -> impl Future<Output = Result<()>>;
 
-    fn flush(
-        &self,
-    ) -> impl Future<Output = Result<()>>;
+    fn flush(&self) -> impl Future<Output = Result<()>>;
 
     fn update_color_index(
         &self,
@@ -282,7 +278,11 @@ fn collapse_records(
                 interval.set_end(record.moment)
             }
             Some(_) | None => {
-                intervals.push(record.into());
+                let mut next_interval: UsageIntervalEntity = record.into();
+                if let Some(previous) = intervals.last() {
+                    next_interval.start = previous.end();
+                }
+                intervals.push(next_interval);
             }
         }
     }
@@ -476,10 +476,13 @@ mod tests {
             values,
             vec![
                 records[0].clone().into(),
-                UsageIntervalEntity::from(records[1].clone()).with_duration(Duration::seconds(4))
+                UsageIntervalEntity::from(records[1].clone())
+                    .with_start(records[0].moment)
+                    .with_duration(Duration::seconds(5))
             ]
         );
 
         Ok(())
     }
+
 }

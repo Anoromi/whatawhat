@@ -67,6 +67,10 @@ impl UsageIntervalEntity {
     pub fn with_duration(self, duration: Duration) -> Self {
         Self { duration, ..self }
     }
+
+    pub fn with_start(self, start: DateTime<Utc>) -> Self {
+        Self { start, ..self }
+    }
 }
 
 mod duration_ser {
