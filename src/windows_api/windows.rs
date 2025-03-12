@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use windows::Win32::{
     Foundation::{CloseHandle, BOOL, HANDLE, HWND},
     System::{
@@ -76,31 +76,25 @@ unsafe fn get_window_process_path(window_handle: HANDLE, text: &mut [u16]) -> Re
 
 unsafe fn get_window_title(window_handle: HWND, text: &mut [u16]) -> String {
     let len = unsafe { GetWindowTextW(window_handle, text) };
-    println!("name {}", String::from_utf16_lossy(&text[..len as usize]));
-    // 
-    // println!("name utf-8 {}", String::from_utf8_loss(&text[..len as usize]));
     String::from_utf16_lossy(&text[..len as usize])
 }
 
-pub fn get_idle_time() -> u32 {
+pub fn get_idle_time() -> Result<u32> {
     let mut last: LASTINPUTINFO = LASTINPUTINFO {
         cbSize: size_of::<LASTINPUTINFO>() as u32,
         dwTime: 0,
     };
     let is_success = unsafe { GetLastInputInfo(&mut last) };
+    if !is_success.as_bool() {
+        return Err(anyhow!("Failed to retreive user idle time"));
+    }
+
     let tick_count = unsafe { GetTickCount64() };
-    println!(
-        "{} {} {} {}",
-        is_success.0 != 0,
-        tick_count,
-        last.dwTime,
-        (tick_count - last.dwTime as u64) / 1000
-    );
     let duration = tick_count - last.dwTime as u64;
     if duration > u32::MAX as u64 {
-        u32::MAX
+        Ok(u32::MAX)
     } else {
-        duration as u32
+        Ok(duration as u32)
     }
 }
 
@@ -124,6 +118,6 @@ impl WindowManager for WindowsWindowManager {
     }
 
     fn get_idle_time(&mut self) -> Result<u32> {
-        Ok(get_idle_time())
+        get_idle_time()
     }
 }

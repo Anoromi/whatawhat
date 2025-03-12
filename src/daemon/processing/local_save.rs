@@ -31,7 +31,6 @@ impl<R: RecordStorage, Cs> LocalSaver<R, Cs> {
     async fn move_file_handle(&mut self) -> Result<R::RecordFile> {
         let current_file = self.current_handle.take();
         let now = self.date_provider.time().date_naive();
-        println!("now {now}");
 
         match current_file {
             Some(mut file) if file.get_date() != now => {

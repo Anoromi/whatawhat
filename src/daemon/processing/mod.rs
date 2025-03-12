@@ -1,11 +1,10 @@
 use anyhow::Result;
 use module::EventProcessor;
 use tokio::sync::mpsc::Receiver;
-use tracing::debug;
+use tracing::{debug, error, info};
 
 use super::{pipeline_event::PipeEvent, storage::record_event::RecordEvent};
 
-pub mod combined_processing;
 pub mod local_save;
 pub mod module;
 
@@ -27,7 +26,14 @@ impl<P: EventProcessor> ProcessingModule<P> {
             match message {
                 PipeEvent::Next(record) => {
                     debug!("Processing message {:?}", record);
-                    self.processor.process_next(record).await?
+                    match self.processor.process_next(record.clone()).await {
+                        Ok(_) => {
+                            info!("Processed event {:?}", record)
+                        },
+                        Err(e) => {
+                            error!("Error processing event {:?}: {e:?}", record)
+                        },
+                    }
                 }
             }
         }

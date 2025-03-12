@@ -86,7 +86,6 @@ pub fn get_name(conn: &Connection, window: Window) -> Result<String> {
     }))?;
     let title = String::from_utf8(wm_name.value().to_vec())
         .expect("The WM_NAME property is not valid UTF-8");
-    dbg!(&title);
     Ok(title)
 }
 
@@ -117,8 +116,6 @@ impl LinuxWindowManager {
         let window_name = get_name(conn, active_window)?;
         let process = get_pid(conn, active_window)?.unwrap();
         let process_name = get_process_name(process)?.unwrap();
-        dbg!(&window_name);
-        dbg!(&process_name);
         Ok(ActiveWindowData {
             window_title: window_name.into(),
             process_name: process_name.into(),

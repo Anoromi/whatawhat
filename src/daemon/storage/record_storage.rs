@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::Result;
 use chrono::NaiveDate;
+use fs4::tokio::AsyncFileExt;
 use tokio::{
     fs::File,
     io::{
@@ -19,7 +20,7 @@ use tokio::{
 use tracing::warn;
 
 use crate::{
-    fs::{async_file_ext::FileLock, operations::seek_line_backwards},
+    fs::operations::seek_line_backwards,
     utils::{retry::run_with_retry, time::date_to_record_name},
 };
 
@@ -112,7 +113,7 @@ impl RecordStorageImpl {
         let extract = async || -> Result<Vec<UsageIntervalEntity>, std::io::Error> {
             println!("Extracting {path:?}");
             let file = File::open(path).await?;
-            file.lock_shared_in_place()?;
+            file.lock_shared()?;
             let buffer = BufReader::new(file);
             let mut lines = buffer.lines();
             let mut intervals = vec![];
@@ -129,7 +130,7 @@ impl RecordStorageImpl {
                 }
             }
 
-            lines.into_inner().into_inner().unlock_in_place()?;
+            lines.into_inner().into_inner().unlock_async().await?;
 
             Ok(intervals)
         };
@@ -183,7 +184,7 @@ pub struct UsageIntervalRecordFile<F> {
     date: NaiveDate,
 }
 
-impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> RecordFileHandle
+impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin> RecordFileHandle
     for UsageIntervalRecordFile<F>
 {
     async fn append(&mut self, usage_record: Vec<UsageRecordEntity>) -> Result<()> {
@@ -202,7 +203,7 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> RecordFileHandle
     }
 }
 
-impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> UsageIntervalRecordFile<F> {
+impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin> UsageIntervalRecordFile<F> {
     fn new(file: F, date: NaiveDate) -> Self {
         Self { file, date }
     }
@@ -216,9 +217,9 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + FileLock + Unpin> UsageIntervalReco
 
     async fn append_inner(&mut self, usage_record: Vec<UsageRecordEntity>) -> Result<()> {
         // Semi-safe aquire-release
-        self.file.lock_exclusive_in_place()?;
+        self.file.lock_exclusive()?;
         let result = Self::append_with_file(&mut self.file, usage_record).await;
-        self.file.unlock_in_place()?;
+        self.file.unlock_async().await?;
         result
     }
 
@@ -292,11 +293,11 @@ fn collapse_records(
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
+    use std::io::{Cursor, Write};
 
     use anyhow::Result;
     use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
-    use tempfile::tempdir;
+    use tempfile::{tempdir, tempfile};
     use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 
     use crate::daemon::storage::{
@@ -311,7 +312,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_appender_basic() -> Result<()> {
-        let file = Cursor::new(Vec::new());
+        let file = tokio::fs::File::from_std(tempfile().unwrap());
 
         let mut usage = UsageIntervalRecordFile::new(file, Utc::now().date_naive());
         usage
@@ -378,7 +379,9 @@ mod tests {
         })?;
         previous += "\n";
 
-        let mut file = Cursor::new(previous.into_bytes());
+        let mut file = tempfile().unwrap();
+        file.write_all(previous.as_bytes())?;
+        let mut file = tokio::fs::File::from_std(file);
         file.seek(std::io::SeekFrom::End(0)).await?;
 
         let mut usage = UsageIntervalRecordFile::new(file, Utc::now().date_naive());
