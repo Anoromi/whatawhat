@@ -3,7 +3,6 @@ use std::{env, path::Path};
 use anyhow::Result;
 use sysinfo::{get_current_pid, Signal, System};
 
-use crate::cli::Args;
 
 pub fn kill_previous_servers(name: &Path) {
     let system = System::new_all();
@@ -56,6 +55,6 @@ pub fn restart_server() -> Result<()> {
 
     println!("Spawning");
     #[allow(clippy::zombie_processes)]
-    let ch = command.spawn()?;
+    let _ = command.spawn()?;
     Ok(())
 }

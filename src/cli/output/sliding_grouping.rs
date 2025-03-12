@@ -343,7 +343,7 @@ mod sliding_groupnig_test {
     use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
     use futures::stream;
     use tokio_stream::StreamExt;
-    use tracing::{error, trace};
+    
 
     use crate::{
         cli::output::sliding_grouping::{sliding_interval_grouping, SlidingInterval, TimeOption},

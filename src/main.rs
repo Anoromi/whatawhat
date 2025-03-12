@@ -1,12 +1,10 @@
 use std::env;
 
 use anyhow::Result;
-use cli::{application_default_path, run_cli};
+use cli::run_cli;
 use tracing::error;
-use tracing_subscriber::fmt::writer::MakeWriterExt;
 use utils::logging::enable_logging;
 
-pub mod api;
 pub mod cli;
 pub mod daemon;
 pub mod fs;

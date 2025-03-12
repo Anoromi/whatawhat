@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::PathBuf, sync::LazyLock};
+use std::{path::PathBuf, sync::LazyLock};
 
 use anyhow::Result;
 use tracing::level_filters::LevelFilter;

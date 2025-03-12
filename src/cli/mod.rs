@@ -1,14 +1,13 @@
 pub mod output;
 pub mod process;
-pub mod termination;
 
-use std::{env, ops::Deref, path::PathBuf};
+use std::{env, path::PathBuf};
 
 use anyhow::Result;
 use chrono::{DateTime, Duration, Local, TimeDelta, Utc};
 use clap::{error::ErrorKind, CommandFactory, Parser};
 use dateparser::DateTimeUtc;
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use output::{
     analysis::{analyze_processes, analyze_windows},
     extract_between,
@@ -16,7 +15,7 @@ use output::{
 };
 use process::{kill_previous_servers, restart_server};
 use tokio::io;
-use tracing::{info, instrument};
+use tracing::info;
 
 use crate::{
     daemon::{
@@ -264,27 +263,6 @@ fn clean_process_name(value: &str) -> String {
         .file_name()
         .map(|v| v.to_string_lossy().to_string())
         .unwrap_or_else(|| value.to_string())
-}
-
-fn print_interval(interval: UsageIntervalEntity) {
-    let process_name = PathBuf::from(interval.process_name.deref())
-        .file_name()
-        .map(|v| v.to_string_lossy().to_string())
-        .unwrap_or_else(|| interval.process_name.to_string());
-
-    let end: DateTime<Local> = interval.end().into();
-    let start: DateTime<Local> = interval.start.into();
-    let duration = format_duration(interval.duration);
-
-    let window_name = interval.window_name;
-
-    println!(
-        "{}\t{}\t{}\t{}",
-        start.format("%H:%M:%S"),
-        duration,
-        process_name,
-        window_name
-    )
 }
 
 pub fn application_default_path() -> Result<PathBuf> {

@@ -2,7 +2,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     future::Future,
     io::ErrorKind,
-    ops::{Deref, DerefMut},
+    ops::Deref,
     path::{Path, PathBuf},
     time::Duration,
 };
@@ -295,12 +295,9 @@ mod tests {
     use std::io::Cursor;
 
     use anyhow::Result;
-    use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
-    use tempfile::{tempdir, tempfile};
-    use tokio::{
-        fs::File,
-        io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt},
-    };
+    use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
+    use tempfile::tempdir;
+    use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 
     use crate::daemon::storage::{
         entities::{UsageIntervalEntity, UsageRecordEntity},
