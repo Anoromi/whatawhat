@@ -6,7 +6,7 @@ use pipeline_event::PipeEvent;
 use processing::{local_save::LocalSaver, ProcessingModule};
 use storage::{
     record_event::RecordEvent,
-    record_storage::{ColorIndexStorage, RecordStorageImpl},
+    record_storage::RecordStorageImpl,
 };
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
@@ -44,7 +44,7 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
 
     let storage = RecordStorageImpl::new(dir.join("records"))?;
 
-    let saver = LocalSaver::new(storage, NoColorIndex, Box::new(DefaultClock));
+    let saver = LocalSaver::new(storage, Box::new(DefaultClock));
     let processing = ProcessingModule::new(receiver, saver);
 
     let (_, collection_result, processing_result) = tokio::join!(
@@ -68,31 +68,4 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
     }
 
     Ok(())
-}
-
-struct NoColorIndex;
-
-impl ColorIndexStorage for NoColorIndex {
-    async fn recover_shutdown(&self) -> Result<()> {
-        Ok(())
-    }
-
-    async fn flush(&self) -> Result<()> {
-        Ok(())
-    }
-
-    async fn update_color_index(
-        &self,
-        _process_name: &str,
-        _color: storage::record_event::Color,
-    ) -> Result<()> {
-        Ok(())
-    }
-
-    async fn get_colors_for(
-        &self,
-        _names: std::collections::BTreeSet<String>,
-    ) -> Result<std::collections::BTreeMap<String, Option<storage::record_event::Color>>> {
-        Ok(Default::default())
-    }
 }

@@ -40,9 +40,6 @@ enum Args {
         dir: Option<PathBuf>,
     },
     Stop {},
-    // StopProcess {
-    //     pid: u32,
-    // },
     Timeline {
         #[command(flatten)]
         command: TimelineCommand,
@@ -78,7 +75,6 @@ struct DaemonParams {
 struct PrintCurrent {
     #[arg(long, help = "Include afk", default_value_t = false)]
     afk: bool,
-    // #[arg(long, default_value_t = Default::default())]
     #[command(flatten)]
     interval: PrintInterval,
 }
@@ -105,7 +101,6 @@ pub async fn run_cli() -> Result<()> {
         Args::Stop {} => {
             let process_name = env::current_exe().unwrap();
             kill_previous_servers(&process_name);
-            info!("Success");
             Ok(())
         }
         Args::Serve { .. } => {

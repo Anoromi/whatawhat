@@ -73,24 +73,6 @@ where
     }
 }
 
-/// Intended for future use to store colors
-pub trait ColorIndexStorage {
-    fn recover_shutdown(&self) -> impl Future<Output = Result<()>>;
-
-    fn flush(&self) -> impl Future<Output = Result<()>>;
-
-    fn update_color_index(
-        &self,
-        process_name: &str,
-        color: Color,
-    ) -> impl Future<Output = Result<()>>;
-
-    fn get_colors_for(
-        &self,
-        names: BTreeSet<String>,
-    ) -> impl Future<Output = Result<BTreeMap<String, Option<Color>>>>;
-}
-
 pub trait RecordFileHandle {
     fn append(&mut self, usage_records: Vec<UsageRecordEntity>)
         -> impl Future<Output = Result<()>>;

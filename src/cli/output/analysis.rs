@@ -8,7 +8,6 @@ use crate::daemon::storage::{entities::UsageIntervalEntity, record_event::Color}
 pub struct UsageAnalisis {
     pub process_name: Arc<str>,
     pub duration: Duration,
-    // Some day I'll have color, I'm sure of it, that's a promise
     pub color: Option<Color>,
 }
 
@@ -23,15 +22,14 @@ impl UsageAnalisis {
 }
 
 #[derive(Debug)]
-pub struct WindowUsageAnalisis {
+pub struct WindowUsage {
     pub process_name: Arc<str>,
     pub window_name: Arc<str>,
     pub duration: Duration,
-    // Some day I'll have color, I'm sure of it, that's a promise
     pub color: Option<Color>,
 }
 
-impl WindowUsageAnalisis {
+impl WindowUsage {
     pub fn new(process_anme: Arc<str>, name: Arc<str>, color: Option<Color>) -> Self {
         Self {
             process_name: process_anme,
@@ -79,13 +77,13 @@ pub fn analyze_processes(
 pub fn analyze_windows(
     intervals: Vec<UsageIntervalEntity>,
     threshold: Duration,
-) -> Vec<WindowUsageAnalisis> {
-    let mut map = HashMap::<(Arc<str>, Arc<str>), WindowUsageAnalisis>::new();
+) -> Vec<WindowUsage> {
+    let mut map = HashMap::<(Arc<str>, Arc<str>), WindowUsage>::new();
 
     for v in intervals {
         let analysis = map
             .entry((v.process_name.clone(), v.window_name.clone()))
-            .or_insert_with(|| WindowUsageAnalisis::new(v.process_name, v.window_name, None));
+            .or_insert_with(|| WindowUsage::new(v.process_name, v.window_name, None));
         analysis.duration += v.duration;
     }
     let mut usages = map

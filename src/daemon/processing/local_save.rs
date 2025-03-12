@@ -5,25 +5,23 @@ use crate::{
     daemon::storage::{
         entities::UsageRecordEntity,
         record_event::RecordEvent,
-        record_storage::{ColorIndexStorage, RecordFileHandle, RecordStorage},
+        record_storage::{RecordFileHandle, RecordStorage},
     }, utils::date_provider::Clock,
 };
 
 use super::module::EventProcessor;
 
-pub struct LocalSaver<R: RecordStorage, Cs> {
+pub struct LocalSaver<R: RecordStorage> {
     records_storage: R,
     current_handle: Option<R::RecordFile>,
-    color_storage: Cs,
     date_provider: Box<dyn Clock>,
 }
 
-impl<R: RecordStorage, Cs> LocalSaver<R, Cs> {
-    pub fn new(records_storage: R, color_storage: Cs, date_provider: Box<dyn Clock>) -> Self {
+impl<R: RecordStorage> LocalSaver<R> {
+    pub fn new(records_storage: R, date_provider: Box<dyn Clock>) -> Self {
         Self {
             records_storage,
             current_handle: None,
-            color_storage,
             date_provider,
         }
     }
@@ -46,15 +44,9 @@ impl<R: RecordStorage, Cs> LocalSaver<R, Cs> {
     }
 }
 
-impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalSaver<R, Cs> {
+impl<R: RecordStorage> EventProcessor for LocalSaver<R> {
     async fn process_next(&mut self, message: RecordEvent) -> anyhow::Result<()> {
         let mut active_file = self.move_file_handle().await?;
-
-        if let Some(color) = message.color {
-            self.color_storage
-                .update_color_index(message.process_name.as_ref(), color)
-                .await?;
-        }
 
         active_file
             .append(vec![UsageRecordEntity {
@@ -72,7 +64,6 @@ impl<R: RecordStorage, Cs: ColorIndexStorage> EventProcessor for LocalSaver<R, C
         if let Some(v) = self.current_handle.as_mut() {
             v.flush().await?;
         }
-        self.color_storage.flush().await?;
         Ok(())
     }
 }

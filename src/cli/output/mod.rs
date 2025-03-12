@@ -73,10 +73,3 @@ fn date_range(start: NaiveDate, end: NaiveDate) -> impl Stream<Item = NaiveDate>
     )
 }
 
-// #[cfg(test)]
-// mod tests {
-//
-//
-//     #[test]
-//     fn test_build
-// }
