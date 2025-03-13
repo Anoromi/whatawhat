@@ -2,10 +2,8 @@ use std::{fmt::Display, ops::Deref, str::FromStr};
 
 use anyhow::anyhow;
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct Percentage(f32);
-
 
 impl Display for Percentage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -13,13 +11,11 @@ impl Display for Percentage {
     }
 }
 
-
 impl Percentage {
     pub fn new_opt(value: f32) -> Option<Percentage> {
         if value < 0.0 {
             None
-        }
-        else {
+        } else {
             Some(Percentage(value))
         }
     }
@@ -34,7 +30,6 @@ impl FromStr for Percentage {
         let v = s.parse::<f32>()?;
         Percentage::new_opt(v).ok_or_else(|| anyhow!("Can't parse {s} into percentage"))
     }
-
 }
 
 impl Deref for Percentage {
@@ -44,5 +39,3 @@ impl Deref for Percentage {
         &self.0
     }
 }
-
-

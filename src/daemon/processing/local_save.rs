@@ -6,7 +6,7 @@ use crate::{
         record_event::RecordEvent,
         record_storage::{RecordFileHandle, RecordStorage},
     },
-    utils::date_provider::Clock,
+    utils::clock::Clock,
 };
 
 use super::module::EventProcessor;

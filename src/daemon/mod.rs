@@ -9,7 +9,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::error;
 
 use crate::{
-    utils::date_provider::DefaultClock,
+    utils::clock::DefaultClock,
     windows_api::{GenericWindowManager, WindowManager},
 };
 

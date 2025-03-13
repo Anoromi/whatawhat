@@ -9,7 +9,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, error};
 
 use crate::{
-    daemon::storage::record_event::RecordEvent, utils::date_provider::Clock,
+    daemon::storage::record_event::RecordEvent, utils::clock::Clock,
     windows_api::WindowManager,
 };
 

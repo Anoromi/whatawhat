@@ -15,6 +15,7 @@ use output::{
 };
 use process::{kill_previous_servers, restart_server};
 use tokio::io;
+use tracing::{error, level_filters::LevelFilter};
 
 use crate::{
     daemon::{
@@ -22,14 +23,22 @@ use crate::{
         storage::{entities::UsageIntervalEntity, record_storage::RecordStorageImpl},
     },
     utils::{
-        percentage::Percentage,
-        time::{day_start, next_day_start},
+        logging::enable_logging, percentage::Percentage, time::{day_start, next_day_start}
     },
 };
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-enum Args {
+struct Args {
+    #[command(subcommand)]
+    commands: Commands,
+    #[arg(long, default_value_t = false)]
+    log: bool
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+enum Commands {
     Init {
         #[arg(long)]
         dir: Option<PathBuf>,
@@ -90,23 +99,29 @@ pub struct PrintInterval {
 pub async fn run_cli() -> Result<()> {
     let args = Args::parse();
 
+    let logging_level = if args.log {
+        Some(LevelFilter::TRACE)
+    } else {None};
+    enable_logging(None, logging_level)?;
+
+    error!("Err");
     dbg!(&args);
 
-    match args {
-        Args::Init { .. } => {
+    match args.commands {
+        Commands::Init { .. } => {
             restart_server()?;
             Ok(())
         }
-        Args::Stop {} => {
+        Commands::Stop {} => {
             let process_name = env::current_exe().unwrap();
             kill_previous_servers(&process_name);
             Ok(())
         }
-        Args::Serve { .. } => {
+        Commands::Serve { .. } => {
             start_daemon(application_default_path()?).await?;
             Ok(())
         }
-        Args::Timeline { command } => process_timeline_command(command).await,
+        Commands::Timeline { command } => process_timeline_command(command).await,
     }
 }
 

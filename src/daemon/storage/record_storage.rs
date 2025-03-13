@@ -3,11 +3,10 @@ use std::{
     io::ErrorKind,
     ops::Deref,
     path::{Path, PathBuf},
-    time::Duration,
 };
 
 use anyhow::Result;
-use chrono::NaiveDate;
+use chrono::{Duration, NaiveDate};
 use fs4::tokio::AsyncFileExt;
 use tokio::{
     fs::File,
@@ -20,7 +19,7 @@ use tracing::warn;
 
 use crate::{
     fs::operations::seek_line_backwards,
-    utils::{retry::run_with_retry, time::date_to_record_name},
+    utils::time::date_to_record_name,
 };
 
 use super::entities::{UsageIntervalEntity, UsageRecordEntity};
@@ -166,10 +165,7 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin> R
     for UsageIntervalRecordFile<F>
 {
     async fn append(&mut self, usage_record: Vec<UsageRecordEntity>) -> Result<()> {
-        run_with_retry(10, Duration::from_millis(100), async || {
-            self.append_inner(usage_record.clone()).await
-        })
-        .await
+        self.append_inner(usage_record.clone()).await
     }
 
     fn get_date(&self) -> chrono::NaiveDate {
@@ -181,7 +177,9 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin> R
     }
 }
 
-impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin> UsageIntervalRecordFile<F> {
+impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin>
+    UsageIntervalRecordFile<F>
+{
     fn new(file: F, date: NaiveDate) -> Self {
         Self { file, date }
     }
@@ -238,6 +236,10 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin> U
     }
 }
 
+/// Value used to bridge gap between window transitions. There should be a limit though so that an
+/// event that happened an hour ago didn't affect new events
+const MAX_MERGE_DURATION: Duration = Duration::seconds(2);
+
 fn collapse_records(
     last_interval: Option<UsageIntervalEntity>,
     usage_records: impl IntoIterator<Item = UsageRecordEntity>,
@@ -258,8 +260,11 @@ fn collapse_records(
             }
             Some(_) | None => {
                 let mut next_interval: UsageIntervalEntity = record.into();
-                if let Some(previous) = intervals.last() {
-                    next_interval.start = previous.end();
+                match intervals.last() {
+                    Some(previous) if next_interval.start - previous.end() < MAX_MERGE_DURATION => {
+                        next_interval.start = previous.end();
+                    }
+                    _ => (),
                 }
                 intervals.push(next_interval);
             }
@@ -501,5 +506,41 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn test_record_collapsing_cutoff() -> Result<()> {
+        let records = [
+            UsageRecordEntity {
+                window_name: "test".into(),
+                process_name: "test process".into(),
+                moment: Utc.from_utc_datetime(&START_DATE),
+                afk: false,
+            },
+            UsageRecordEntity {
+                window_name: "test 2".into(),
+                process_name: "test process 2".into(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(3),
+                afk: false,
+            },
+            UsageRecordEntity {
+                window_name: "test 2".into(),
+                process_name: "test process 2".into(),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(5),
+                afk: false,
+            },
+        ];
+        let values = collapse_records(None, records.clone());
 
+        assert_eq!(values.len(), 2);
+        assert_eq!(
+            values,
+            vec![
+                records[0].clone().into(),
+                UsageIntervalEntity::from(records[1].clone())
+                    .with_start(records[1].moment)
+                    .with_duration(Duration::seconds(2))
+            ]
+        );
+
+        Ok(())
+    }
 }

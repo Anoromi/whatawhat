@@ -14,7 +14,6 @@ pub mod windows_api;
 #[tokio::main]
 async fn main() -> Result<()> {
     env::set_var("RUST_BACKTRACE", "full");
-    enable_logging(None)?;
 
     run_cli().await.inspect_err(|e| {
         error!("{e:?}");
