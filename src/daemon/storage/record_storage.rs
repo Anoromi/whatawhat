@@ -1,5 +1,4 @@
 use std::{
-    collections::{BTreeMap, BTreeSet},
     future::Future,
     io::ErrorKind,
     ops::Deref,
@@ -24,10 +23,7 @@ use crate::{
     utils::{retry::run_with_retry, time::date_to_record_name},
 };
 
-use super::{
-    entities::{UsageIntervalEntity, UsageRecordEntity},
-    record_event::Color,
-};
+use super::entities::{UsageIntervalEntity, UsageRecordEntity};
 
 /// Intended for abstracting operations for saving the records in a directory
 pub trait RecordStorage {
@@ -275,7 +271,7 @@ fn collapse_records(
 
 #[cfg(test)]
 mod tests {
-    use std::io::{Cursor, Write};
+    use std::io::Write;
 
     use anyhow::Result;
     use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};

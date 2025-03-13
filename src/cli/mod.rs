@@ -15,7 +15,6 @@ use output::{
 };
 use process::{kill_previous_servers, restart_server};
 use tokio::io;
-use tracing::info;
 
 use crate::{
     daemon::{

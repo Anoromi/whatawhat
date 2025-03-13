@@ -1,4 +1,3 @@
-
 use anyhow::Result;
 
 use crate::{
@@ -6,11 +5,15 @@ use crate::{
         entities::UsageRecordEntity,
         record_event::RecordEvent,
         record_storage::{RecordFileHandle, RecordStorage},
-    }, utils::date_provider::Clock,
+    },
+    utils::date_provider::Clock,
 };
 
 use super::module::EventProcessor;
 
+/// Represents saving module. Saving module main goal is to bridge
+/// [ProcessingModule](super::ProcessingModule) and [RecordStorage]
+/// In the future it might also combine multple savers, like color storage + record storage.
 pub struct LocalSaver<R: RecordStorage> {
     records_storage: R,
     current_handle: Option<R::RecordFile>,

@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct RecordEvent {
     pub timestamp: chrono::DateTime<Utc>,
+    /// Name of the window. For example 'bash in hello' or 'Document 1' or 'Vibing in YouTube -
+    /// Chrome'
     pub window_name: Arc<str>,
+    /// Full path to an executable. For example /home/etc/nvim
     pub process_name: Arc<str>,
     pub color: Option<Color>,
     pub afk: bool,

@@ -29,7 +29,7 @@ impl FromStr for Percentage {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // This means than 100%% also works, but I think I'm fine with that
+        // This means that 100%% also works, but I think I'm fine with that
         let s = s.trim_end_matches("%");
         let v = s.parse::<f32>()?;
         Percentage::new_opt(v).ok_or_else(|| anyhow!("Can't parse {s} into percentage"))

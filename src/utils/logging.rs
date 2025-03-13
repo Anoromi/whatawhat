@@ -24,7 +24,7 @@ pub fn enable_logging(application_data_path: Option<&str>) -> Result<()> {
             env!("CARGO_PKG_NAME").replace("-", "_"),
         )))
         .with_writer(stdout.and(appender))
-        .pretty()
+        .compact()
         .init();
     Ok(())
 }

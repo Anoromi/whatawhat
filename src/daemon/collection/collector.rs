@@ -9,13 +9,14 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, error};
 
 use crate::{
-    daemon::{pipeline_event::PipeEvent, storage::record_event::RecordEvent}, utils::date_provider::Clock, windows_api::WindowManager
+    daemon::storage::record_event::RecordEvent, utils::date_provider::Clock,
+    windows_api::WindowManager,
 };
 
 use super::afk::AfkEvaluator;
 
 pub struct DataCollectionModule {
-    next: mpsc::Sender<PipeEvent<RecordEvent>>,
+    next: mpsc::Sender<RecordEvent>,
     producer: Box<dyn WindowManager>,
     shutdown: CancellationToken,
     afk_evaluator: AfkEvaluator,
@@ -25,12 +26,12 @@ pub struct DataCollectionModule {
 
 impl DataCollectionModule {
     pub fn new(
-        next: mpsc::Sender<PipeEvent<RecordEvent>>,
+        next: mpsc::Sender<RecordEvent>,
         producer: Box<dyn WindowManager>,
         shutdown: CancellationToken,
         afk_evaluator: AfkEvaluator,
         collection_frequency: Duration,
-    time_provider: Box<dyn Clock>,
+        time_provider: Box<dyn Clock>,
     ) -> Self {
         Self {
             next,
@@ -64,9 +65,9 @@ impl DataCollectionModule {
             let elapsed = execution_start.elapsed();
 
             match self.collect_data() {
-                Ok(v) => {
-                    debug!("Sending message {:?}", v);
-                    self.next.send(PipeEvent::Next(v)).await?;
+                Ok(record) => {
+                    debug!("Sending message {:?}", record);
+                    self.next.send(record).await?;
                 }
                 Err(e) => {
                     error!("Encountered an error during collection {}", e)
