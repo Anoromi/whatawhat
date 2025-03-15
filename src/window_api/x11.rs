@@ -29,7 +29,7 @@ fn get_pid(conn: &Connection, window: Window) -> Result<Option<u32>> {
     }))?;
     let result_slice = result.value::<u32>();
     println!("pid {:?}", result_slice);
-    if result_slice.len() == 0 {
+    if result_slice.is_empty() {
         return Ok(None);
     }
     Ok(Some(result_slice[0]))
@@ -125,7 +125,7 @@ impl LinuxWindowManager {
 
 impl WindowManager for LinuxWindowManager {
     fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
-        assert!(self.preferred_screen > 0);
+        assert!(self.preferred_screen >= 0);
         let screen_num: u32 = self.preferred_screen.try_into().unwrap();
 
         let _ = self.connection.send_request(&GrabServer {});
