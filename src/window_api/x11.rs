@@ -1,5 +1,6 @@
 use anyhow::Result;
 use sysinfo::Pid;
+use tracing::instrument;
 use xcb::{
     screensaver::{QueryInfo, QueryInfoReply},
     x::{
@@ -103,6 +104,7 @@ impl LinuxWindowManager {
         })
     }
 
+    #[instrument(skip(conn))]
     pub fn get_active_internal(
         conn: &Connection,
         preferred_screen: u32,
@@ -124,6 +126,7 @@ impl LinuxWindowManager {
 }
 
 impl WindowManager for LinuxWindowManager {
+    #[instrument(skip(self))]
     fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
         assert!(self.preferred_screen >= 0);
         let screen_num: u32 = self.preferred_screen.try_into().unwrap();
@@ -135,6 +138,7 @@ impl WindowManager for LinuxWindowManager {
         result
     }
 
+    #[instrument(skip(self))]
     fn get_idle_time(&mut self) -> Result<u32> {
         let hehe = self.connection.send_request(&QueryInfo {
             drawable: Drawable::None,
