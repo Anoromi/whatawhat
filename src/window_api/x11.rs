@@ -140,10 +140,10 @@ impl WindowManager for LinuxWindowManager {
 
     #[instrument(skip(self))]
     fn get_idle_time(&mut self) -> Result<u32> {
-        let hehe = self.connection.send_request(&QueryInfo {
+        let idle = self.connection.send_request(&QueryInfo {
             drawable: Drawable::None,
         });
-        let reply: QueryInfoReply = self.connection.wait_for_reply(hehe)?;
+        let reply: QueryInfoReply = self.connection.wait_for_reply(idle).unwrap();
         Ok(reply.ms_since_user_input())
     }
 }
