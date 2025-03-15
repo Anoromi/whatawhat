@@ -140,8 +140,11 @@ impl WindowManager for LinuxWindowManager {
 
     #[instrument(skip(self))]
     fn get_idle_time(&mut self) -> Result<u32> {
+        // self.connection.send_request(S)
+        let w = self.connection.get_setup();
+        let wnd = w.roots().nth(self.preferred_screen as usize).unwrap().root();
         let idle = self.connection.send_request(&QueryInfo {
-            drawable: Drawable::None,
+            drawable: Drawable::Window(wnd),
         });
         let reply: QueryInfoReply = self.connection.wait_for_reply(idle).unwrap();
         Ok(reply.ms_since_user_input())
