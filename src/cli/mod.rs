@@ -29,7 +29,10 @@ struct Args {
 enum Commands {
     #[command(about = "Starts a daemon for the application")]
     Init {
-        #[arg(long, help = "Application directory. By default tries to save into $XDG_STATE_HOME or $HOME/.local/state")]
+        #[arg(
+            long,
+            help = "Application directory. By default tries to save into $XDG_STATE_HOME or $HOME/.local/state"
+        )]
         dir: Option<PathBuf>,
     },
     #[command(about = "Display a timeline of user activity")]
@@ -41,7 +44,10 @@ enum Commands {
         about = "Run a daemon directly in current console. Used for creating a daemon internally and for debugging"
     )]
     Serve {
-        #[arg(long, help = "Application directory. By default tries to save into $XDG_STATE_HOME or $HOME/.local/state")]
+        #[arg(
+            long,
+            help = "Application directory. By default tries to save into $XDG_STATE_HOME or $HOME/.local/state"
+        )]
         dir: Option<PathBuf>,
     },
     #[command(about = "Stop currently running daemon.")]
@@ -87,11 +93,19 @@ pub fn create_application_default_path() -> Result<PathBuf> {
         }
         #[cfg(target_os = "linux")]
         {
-            let path = PathBuf::from(
+            let mut path = PathBuf::from(
                 env::var("XDG_STATE_HOME")
-                    .or_else(|_| env::var("HOME").map(|home| home + ".local/state"))
+                    .map(|v| PathBuf::from(v))
+                    .or_else(|_| {
+                        env::var("HOME").map(|home| {
+                            let mut path = PathBuf::from(home);
+                            path.push(".local/state");
+                            path
+                        })
+                    })
                     .expect("Couldn't find neither XDG_STATE_HOME nor HOME"),
             );
+            path.push("whatawhat");
             path
         }
     };
