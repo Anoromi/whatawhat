@@ -4,7 +4,7 @@ use anyhow::Result;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
 
-use crate::cli::application_default_path;
+use crate::cli::create_application_default_path;
 
 pub fn enable_logging(
     application_data_path: Option<&str>,
@@ -12,7 +12,7 @@ pub fn enable_logging(
 ) -> Result<()> {
     let application_data_path = match application_data_path {
         Some(v) => PathBuf::from(v),
-        None => application_default_path()?.join("logs"),
+        None => create_application_default_path()?.join("logs"),
     };
     let appender = tracing_appender::rolling::daily(application_data_path, "app");
 

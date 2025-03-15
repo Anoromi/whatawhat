@@ -17,7 +17,7 @@ pub struct ExtractConfig {
 
 impl ExtractConfig {
     fn filter(&self, entity: UsageIntervalEntity) -> Option<UsageIntervalEntity> {
-        entity.filter_by_interval(self.start, self.end)
+        entity.clamp(self.start, self.end)
     }
 }
 

@@ -69,14 +69,14 @@ pub async fn run_cli() -> Result<()> {
             Ok(())
         }
         Commands::Serve { .. } => {
-            start_daemon(application_default_path()?).await?;
+            start_daemon(create_application_default_path()?).await?;
             Ok(())
         }
         Commands::Timeline { command } => process_timeline_command(command).await,
     }
 }
 
-pub fn application_default_path() -> Result<PathBuf> {
+pub fn create_application_default_path() -> Result<PathBuf> {
     let path = {
         #[cfg(windows)]
         {
@@ -96,7 +96,7 @@ pub fn application_default_path() -> Result<PathBuf> {
         }
     };
 
-    match std::fs::create_dir(&path) {
+    match std::fs::create_dir_all(&path) {
         Ok(_) => Ok(path),
         Err(v) if v.kind() == io::ErrorKind::AlreadyExists => Ok(path),
         Err(v) => Err(v.into()),

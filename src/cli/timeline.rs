@@ -16,7 +16,7 @@ use crate::{
 };
 
 use super::{
-    application_default_path,
+    create_application_default_path,
     output::{
         self,
         analysis::{analyze_processes, analyze_windows},
@@ -109,7 +109,7 @@ pub async fn process_timeline_command(
         Err(value) => return Err(value),
     };
 
-    let application = RecordStorageImpl::new(application_default_path()?.join("records"))?;
+    let application = RecordStorageImpl::new(create_application_default_path()?.join("records"))?;
 
     let results = extract_between(
         application,

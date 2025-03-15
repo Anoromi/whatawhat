@@ -7,6 +7,9 @@ use serde::Serialize;
 
 use std::sync::Arc;
 
+/// The struct used for storing data on the disk. The intention is to only save intervals on disk
+/// to reduce disk usage. It's better to store 1 activity record specifying that the user has been
+/// working on x for 1 minute instead of 60 records
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize, Clone)]
 pub struct UsageIntervalEntity {
     pub window_name: Arc<str>,
@@ -28,6 +31,8 @@ impl UsageIntervalEntity {
         self.duration = v - self.start;
     }
 
+    /// Splits an interval into 2 halves, 1 before split, 1 after. Used to separate intervals into smaller chunks, when
+    /// analyzing data.
     pub fn split_by(
         self,
         split: DateTime<Utc>,
@@ -56,7 +61,9 @@ impl UsageIntervalEntity {
         }
     }
 
-    pub fn filter_by_interval(
+    // Returns usage only in the specified interval. Because the usage might happen outside of the
+    // specified interval the result is optional.
+    pub fn clamp(
         self,
         from: DateTime<Utc>,
         to: DateTime<Utc>,
@@ -94,6 +101,15 @@ mod duration_ser {
     }
 }
 
+/// Represents an activity record at a certain point in time.
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize, Clone)]
+pub struct UsageRecordEntity {
+    pub window_name: Arc<str>,
+    pub process_name: Arc<str>,
+    pub moment: DateTime<Utc>,
+    pub afk: bool,
+}
+
 impl From<UsageRecordEntity> for UsageIntervalEntity {
     fn from(
         UsageRecordEntity {
@@ -111,12 +127,4 @@ impl From<UsageRecordEntity> for UsageIntervalEntity {
             afk,
         }
     }
-}
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize, Clone)]
-pub struct UsageRecordEntity {
-    pub window_name: Arc<str>,
-    pub process_name: Arc<str>,
-    pub moment: DateTime<Utc>,
-    pub afk: bool,
 }
