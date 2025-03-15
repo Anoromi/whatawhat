@@ -69,7 +69,7 @@ impl DataCollectionModule {
                     self.next.send(record).await?;
                 }
                 Err(e) => {
-                    error!("Encountered an error during collection {}", e)
+                    error!("Encountered an error during collection {:?}", e)
                 }
             }
             tokio::select! {
