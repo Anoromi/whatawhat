@@ -12,7 +12,6 @@ pub struct RecordEvent {
     pub window_name: Arc<str>,
     /// Full path to an executable. For example /home/etc/nvim
     pub process_name: Arc<str>,
-    pub color: Option<Color>,
     pub afk: bool,
 }
 

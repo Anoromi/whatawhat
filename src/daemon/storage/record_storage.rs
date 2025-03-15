@@ -15,7 +15,7 @@ use tokio::{
         AsyncWriteExt, BufReader,
     },
 };
-use tracing::warn;
+use tracing::{trace, warn};
 
 use crate::{
     fs::operations::seek_line_backwards,
@@ -88,7 +88,7 @@ impl RecordStorageImpl {
 
     async fn get_all_inner(&self, path: &Path) -> Result<Vec<UsageIntervalEntity>> {
         let extract = async || -> Result<Vec<UsageIntervalEntity>, std::io::Error> {
-            println!("Extracting {path:?}");
+            trace!("Extracting {path:?}");
             let file = File::open(path).await?;
             file.lock_shared()?;
             let buffer = BufReader::new(file);
@@ -192,7 +192,7 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin>
     }
 
     async fn append_inner(&mut self, usage_record: Vec<UsageRecordEntity>) -> Result<()> {
-        // Semi-safe aquire-release
+        // Semi-safe acquire-release for a file
         self.file.lock_exclusive()?;
         let result = Self::append_with_file(&mut self.file, usage_record).await;
         self.file.unlock_async().await?;
@@ -281,7 +281,7 @@ mod tests {
     use anyhow::Result;
     use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
     use tempfile::{tempdir, tempfile};
-    use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
+    use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
     use crate::daemon::storage::{
         entities::{UsageIntervalEntity, UsageRecordEntity},

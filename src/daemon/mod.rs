@@ -10,7 +10,7 @@ use tracing::error;
 
 use crate::{
     utils::clock::DefaultClock,
-    windows_api::{GenericWindowManager, WindowManager},
+    window_api::{GenericWindowManager, WindowManager},
 };
 
 pub mod collection;
@@ -23,18 +23,18 @@ const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(1);
 /// Represents the starting point for the daemon
 pub async fn start_daemon(dir: PathBuf) -> Result<()> {
     // TODO
-    std::env::set_current_dir("/");
+    std::env::set_current_dir("/")?;
     let (sender, receiver) = mpsc::channel::<RecordEvent>(10);
     let manager = GenericWindowManager::new()?;
 
-    let shudown_token = CancellationToken::new();
+    let shutdown_token = CancellationToken::new();
 
-    let collector = create_collector(sender, manager, &shudown_token);
+    let collector = create_collector(sender, manager, &shutdown_token);
 
     let processor = create_processor(dir, receiver)?;
 
     let (_, collection_result, processing_result) = tokio::join!(
-        update::detect_shutdown(shudown_token),
+        update::detect_shutdown(shutdown_token),
         collector.run(),
         processor.run(),
     );
@@ -59,12 +59,12 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
 fn create_collector(
     sender: mpsc::Sender<RecordEvent>,
     manager: GenericWindowManager,
-    shudown_token: &CancellationToken,
+    shutdown_token: &CancellationToken,
 ) -> DataCollectionModule {
     DataCollectionModule::new(
         sender,
         Box::new(manager) as Box<dyn WindowManager>,
-        shudown_token.clone(),
+        shutdown_token.clone(),
         AfkEvaluator::from_seconds(60 * 2),
         DEFAULT_COLLECTION_INTERVAL,
         Box::new(DefaultClock),

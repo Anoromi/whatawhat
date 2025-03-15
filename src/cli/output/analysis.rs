@@ -2,21 +2,22 @@ use std::{collections::HashMap, sync::Arc};
 
 use chrono::Duration;
 
-use crate::daemon::storage::{entities::UsageIntervalEntity, record_event::Color};
+use crate::{
+    daemon::storage::entities::UsageIntervalEntity,
+    utils::percentage::Percentage,
+};
 
 #[derive(Debug)]
-pub struct UsageAnalisis {
+pub struct ProcessUsage {
     pub process_name: Arc<str>,
     pub duration: Duration,
-    pub color: Option<Color>,
 }
 
-impl UsageAnalisis {
-    fn new(name: Arc<str>, color: Option<Color>) -> Self {
+impl ProcessUsage {
+    fn new(process_name: Arc<str>) -> Self {
         Self {
-            process_name: name,
+            process_name,
             duration: Duration::zero(),
-            color,
         }
     }
 }
@@ -26,43 +27,47 @@ pub struct WindowUsage {
     pub process_name: Arc<str>,
     pub window_name: Arc<str>,
     pub duration: Duration,
-    pub color: Option<Color>,
 }
 
 impl WindowUsage {
-    pub fn new(process_anme: Arc<str>, name: Arc<str>, color: Option<Color>) -> Self {
+    pub fn new(process_name: Arc<str>, window_name: Arc<str>) -> Self {
         Self {
-            process_name: process_anme,
-            window_name: name,
+            process_name,
+            window_name,
             duration: Duration::zero(),
-            color,
         }
     }
 }
 
+/// Returns vector of unique processes with their statistics + computer usage duration
 pub fn analyze_processes(
     intervals: Vec<UsageIntervalEntity>,
-    interval_length: Duration,
-    threshold: Duration,
-) -> Vec<UsageAnalisis> {
-    let mut map = HashMap::<Arc<str>, UsageAnalisis>::new();
+    min_percentage: Percentage,
+    include_afk: bool,
+) -> (Vec<ProcessUsage>, Duration) {
+    let mut map = HashMap::<Arc<str>, ProcessUsage>::new();
+
+    let mut inactive = ProcessUsage::new("Inactive".into());
+
+    let mut interval_sum = Duration::zero();
 
     for v in intervals {
-        let analysis = map
-            .entry(v.process_name.clone())
-            .or_insert_with(|| UsageAnalisis::new(v.process_name, None));
-        analysis.duration += v.duration;
+        interval_sum += v.duration;
+        if v.afk && !include_afk {
+            inactive.duration += v.duration
+        } else {
+            let analysis = map
+                .entry(v.process_name.clone())
+                .or_insert_with(|| ProcessUsage::new(v.process_name));
+            analysis.duration += v.duration;
+        }
     }
 
-    let mut inactive = UsageAnalisis::new("Inactive".into(), None);
-    let overall  = map
-            .iter()
-            .map(|v| v.1.duration)
-            .fold(Duration::zero(), |acc, next| acc + next);
-    inactive.duration = interval_length
-        - overall;
+    let threshold = interval_sum * (*min_percentage as i32) / 100;
 
-    map.insert(inactive.process_name.clone(), inactive);
+    if !inactive.duration.is_zero() {
+        map.insert(inactive.process_name.clone(), inactive);
+    }
 
     let mut usages = map
         .into_iter()
@@ -71,21 +76,39 @@ pub fn analyze_processes(
         .collect::<Vec<_>>();
     usages.sort_by(|a, b| a.duration.cmp(&b.duration));
     usages.reverse();
-    usages
+    (usages, interval_sum)
 }
 
+/// Returns vector of unique windows with their statistics + computer usage duration
 pub fn analyze_windows(
     intervals: Vec<UsageIntervalEntity>,
-    threshold: Duration,
-) -> Vec<WindowUsage> {
+    min_percentage: Percentage,
+    include_afk: bool,
+) -> (Vec<WindowUsage>, Duration) {
     let mut map = HashMap::<(Arc<str>, Arc<str>), WindowUsage>::new();
 
+    let mut inactive = WindowUsage::new("Inactive".into(), "".into());
+
+    let mut interval_sum = Duration::zero();
+
     for v in intervals {
-        let analysis = map
-            .entry((v.process_name.clone(), v.window_name.clone()))
-            .or_insert_with(|| WindowUsage::new(v.process_name, v.window_name, None));
-        analysis.duration += v.duration;
+        interval_sum += v.duration;
+        if v.afk && !include_afk {
+            inactive.duration += v.duration
+        } else {
+            let analysis = map
+                .entry((v.process_name.clone(), v.window_name.clone()))
+                .or_insert_with(|| WindowUsage::new(v.process_name, v.window_name));
+            analysis.duration += v.duration;
+        }
     }
+
+    let threshold = interval_sum * (*min_percentage as i32) / 100;
+
+    if !inactive.duration.is_zero() {
+        map.insert((inactive.process_name.clone(), inactive.window_name.clone()), inactive);
+    }
+
     let mut usages = map
         .into_iter()
         .map(|v| v.1)
@@ -93,5 +116,5 @@ pub fn analyze_windows(
         .collect::<Vec<_>>();
     usages.sort_by(|a, b| a.duration.cmp(&b.duration));
     usages.reverse();
-    usages
+    (usages, interval_sum)
 }

@@ -21,7 +21,7 @@ pub fn kill_previous_servers(name: &Path) {
             .filter(|v| name == *v)
             .is_some()
         {
-            // This will forcefully terminate the proces on Windows. Anything better will require a
+            // This will forcefully terminate the process on Windows. Anything better will require a
             // lot more work.
             if process.kill_with(Signal::Term).is_none() {
                 process.kill();
@@ -36,12 +36,12 @@ pub fn kill_previous_servers(name: &Path) {
 pub fn restart_server() -> Result<()> {
     // The program use executable passed into the process. It's not the best option but it will do
     // the job in most cases.
-    let process_name = env::current_exe().expect("Can't operate without an excutable");
+    let process_name = env::current_exe().expect("Can't operate without an executable");
     kill_previous_servers(&process_name);
     let mut command = std::process::Command::new(process_name);
     command.args(["serve"]);
 
-    #[cfg(windows)]
+    #[cfg(feature = "win")]
     {
         use std::os::windows::process::CommandExt;
         use windows::Win32::System::Threading::DETACHED_PROCESS;

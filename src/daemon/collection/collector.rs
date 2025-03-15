@@ -10,7 +10,7 @@ use tracing::{debug, error};
 
 use crate::{
     daemon::storage::record_event::RecordEvent, utils::clock::Clock,
-    windows_api::WindowManager,
+    window_api::WindowManager,
 };
 
 use super::afk::AfkEvaluator;
@@ -52,7 +52,6 @@ impl DataCollectionModule {
         Ok(RecordEvent {
             window_name: window_data.window_title,
             process_name: window_data.process_name,
-            color: None,
             afk,
             timestamp,
         })

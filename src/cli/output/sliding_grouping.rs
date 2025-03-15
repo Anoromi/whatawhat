@@ -4,12 +4,15 @@ use anyhow::Result;
 use chrono::{DateTime, Duration, NaiveTime, TimeZone, Timelike, Utc};
 use clap::ValueEnum;
 use futures::{Stream, StreamExt};
+use now::DateTimeNow;
 use tracing::{instrument, trace};
 
-use crate::{daemon::storage::entities::UsageIntervalEntity, utils::percentage::Percentage};
+use crate::daemon::storage::entities::UsageIntervalEntity;
 
-#[derive(Debug, Clone, Copy, ValueEnum)]
+#[derive(Debug, Clone, Copy, ValueEnum, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TimeOption {
+    Weeks,
+    Days,
     Hours,
     Minutes,
     Seconds,
@@ -17,7 +20,7 @@ pub enum TimeOption {
 
 /// Intended for creating simple to understand intervals.
 /// The reason this struct was used instead of Duration is to introduce
-/// compile time safety into [clean_time_start]. Also it's easier for user to 
+/// compile time safety into [clean_time_start]. Also it's easier for user to
 /// type when writing cli commands.
 #[derive(Debug, Clone, Copy)]
 pub struct SlidingInterval {
@@ -28,10 +31,17 @@ pub struct SlidingInterval {
 impl SlidingInterval {
     pub fn new_opt(duration: u32, time: TimeOption) -> Option<Self> {
         match time {
+            // These values are reasonable limitations of what should be allowed
             TimeOption::Hours if duration < 24 => Some(Self { duration, time }),
             TimeOption::Minutes if duration < 60 => Some(Self { duration, time }),
             TimeOption::Seconds if duration < 60 => Some(Self { duration, time }),
-            _ => None,
+            TimeOption::Days if duration < 7 => Some(Self { duration, time }),
+            TimeOption::Weeks if duration < 2 => Some(Self { duration, time }),
+            TimeOption::Hours
+            | TimeOption::Minutes
+            | TimeOption::Seconds
+            | TimeOption::Days
+            | TimeOption::Weeks => None,
         }
     }
 
@@ -48,70 +58,72 @@ impl SlidingInterval {
             TimeOption::Hours => Duration::hours(self.duration as i64),
             TimeOption::Minutes => Duration::minutes(self.duration as i64),
             TimeOption::Seconds => Duration::seconds(self.duration as i64),
+            TimeOption::Weeks => Duration::weeks(self.duration as i64),
+            TimeOption::Days => Duration::days(self.duration as i64),
         }
     }
 
-    pub fn percentage_for(&self, part: Duration) -> Percentage {
-        let whole = self.as_duration();
-        Percentage::new_opt((part.num_seconds() as f64 / whole.num_seconds() as f64 * 100.) as f32)
-            .expect("Percentage should always be at least 0")
-    }
 }
 
-/// Intened for creating a start for a timeline that's easier to comprehend.
-/// It's easier to understand time 01:10:00 than 01:11:32.
-///
+/// Intended for creating a start for a timeline that's easier to comprehend.
+/// It's easier to understand if your timeline starts at 01:10:00 than 01:11:32.
 fn clean_time_start<Tz: TimeZone>(
     rough_start: DateTime<Tz>,
     scale: &SlidingInterval,
 ) -> DateTime<Tz> {
     match scale.time() {
+        TimeOption::Weeks => {
+            rough_start.beginning_of_week()
+        },
+        TimeOption::Days => {
+            rough_start.beginning_of_day()
+        },
         TimeOption::Hours => {
-            let lower_bound = rough_start
-                .with_hour(0)
-                .unwrap()
-                .with_minute(0)
-                .unwrap()
-                .with_second(0)
-                .unwrap()
-                .with_nanosecond(0)
-                .unwrap();
+                let lower_bound = rough_start
+                    .with_hour(0)
+                    .unwrap()
+                    .with_minute(0)
+                    .unwrap()
+                    .with_second(0)
+                    .unwrap()
+                    .with_nanosecond(0)
+                    .unwrap();
 
-            let duration = rough_start.clone() - lower_bound.clone();
-            let remainder = duration.num_hours() as u32 % scale.duration();
-            lower_bound
-                .clone()
-                .with_hour(rough_start.clone().hour() - remainder)
-                .unwrap()
-        }
+                let duration = rough_start.clone() - lower_bound.clone();
+                let remainder = duration.num_hours() as u32 % scale.duration();
+                lower_bound
+                    .clone()
+                    .with_hour(rough_start.clone().hour() - remainder)
+                    .unwrap()
+            }
         TimeOption::Minutes => {
-            let lower_bound = rough_start
-                .with_minute(0)
-                .unwrap()
-                .with_second(0)
-                .unwrap()
-                .with_nanosecond(0)
-                .unwrap();
+                let lower_bound = rough_start
+                    .with_minute(0)
+                    .unwrap()
+                    .with_second(0)
+                    .unwrap()
+                    .with_nanosecond(0)
+                    .unwrap();
 
-            let duration = rough_start.clone() - lower_bound.clone();
-            let remainder = duration.num_minutes() as u32 % scale.duration();
-            lower_bound
-                .with_minute(rough_start.minute() - remainder)
-                .unwrap()
-        }
+                let duration = rough_start.clone() - lower_bound.clone();
+                let remainder = duration.num_minutes() as u32 % scale.duration();
+                lower_bound
+                    .with_minute(rough_start.minute() - remainder)
+                    .unwrap()
+            }
         TimeOption::Seconds => {
-            let lower_bound = rough_start
-                .with_second(0)
-                .unwrap()
-                .with_nanosecond(0)
-                .unwrap();
+                let lower_bound = rough_start
+                    .with_second(0)
+                    .unwrap()
+                    .with_nanosecond(0)
+                    .unwrap();
 
-            let duration = rough_start.clone() - lower_bound.clone();
-            let remainder = duration.num_seconds() as u32 % scale.duration();
-            lower_bound
-                .with_second(rough_start.second() - remainder)
-                .unwrap()
-        }
+                let duration = rough_start.clone() - lower_bound.clone();
+                let remainder = duration.num_seconds() as u32 % scale.duration();
+                lower_bound
+                    .with_second(rough_start.second() - remainder)
+                    .unwrap()
+            }
     }
 }
 
@@ -210,7 +222,12 @@ where
             continue;
         }
 
-        trace!("{} {} {}", usage_interval.process_name, usage_interval.start, usage_interval.end());
+        trace!(
+            "{} {} {}",
+            usage_interval.process_name,
+            usage_interval.start,
+            usage_interval.end()
+        );
         match usage_interval.split_by(end) {
             (None, None) => unreachable!(),
             (None, Some(after)) => {
@@ -232,15 +249,14 @@ where
         }
     }
 
-
     if collected.is_empty() {
-    Ok(GroupResult::End)
-
+        Ok(GroupResult::End)
     } else {
-        Ok(GroupResult::Values { backlog: None, data: Some(analyzer(collected)) })
+        Ok(GroupResult::Values {
+            backlog: None,
+            data: Some(analyzer(collected)),
+        })
     }
-    
-
 }
 #[cfg(test)]
 mod clean_time_tests {
@@ -343,11 +359,11 @@ mod sliding_groupnig_test {
     use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
     use futures::stream;
     use tokio_stream::StreamExt;
-    
 
     use crate::{
         cli::output::sliding_grouping::{sliding_interval_grouping, SlidingInterval, TimeOption},
-        daemon::storage::entities::UsageIntervalEntity, utils::logging::TEST_LOGGING,
+        daemon::storage::entities::UsageIntervalEntity,
+        utils::logging::TEST_LOGGING,
     };
 
     const TEST_DATE: NaiveDate = NaiveDate::from_ymd_opt(2024, 4, 5).unwrap();
@@ -398,7 +414,8 @@ mod sliding_groupnig_test {
             stream.map(Ok),
             SlidingInterval::new_opt(30, TimeOption::Seconds).unwrap(),
             identity,
-        ).await?;
+        )
+        .await?;
 
         for v in grouping.iter() {
             for interval in v.1.as_ref().unwrap() {
@@ -407,12 +424,16 @@ mod sliding_groupnig_test {
             println!()
         }
 
-        assert_eq!(vec_duration(grouping[0].1.as_ref().unwrap().iter()).num_seconds(), 30);
-        assert_eq!(vec_duration(grouping[1].1.as_ref().unwrap().iter()).num_seconds(), 20);
-
+        assert_eq!(
+            vec_duration(grouping[0].1.as_ref().unwrap().iter()).num_seconds(),
+            30
+        );
+        assert_eq!(
+            vec_duration(grouping[1].1.as_ref().unwrap().iter()).num_seconds(),
+            20
+        );
 
         Ok(())
-
     }
 
     fn vec_duration<'a>(values: impl Iterator<Item = &'a UsageIntervalEntity>) -> Duration {

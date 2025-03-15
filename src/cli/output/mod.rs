@@ -10,24 +10,20 @@ use tracing::error;
 
 use crate::daemon::storage::{entities::UsageIntervalEntity, record_storage::RecordStorage};
 
-pub struct PrintConfig {
-    pub with_afk: bool,
+pub struct ExtractConfig {
     pub end: DateTime<Utc>,
     pub start: DateTime<Utc>,
 }
 
-impl PrintConfig {
+impl ExtractConfig {
     fn filter(&self, entity: UsageIntervalEntity) -> Option<UsageIntervalEntity> {
-        if !self.with_afk && entity.afk {
-            return None;
-        }
         entity.filter_by_interval(self.start, self.end)
     }
 }
 
 pub fn extract_between(
     storage: impl RecordStorage,
-    print_config: PrintConfig,
+    print_config: ExtractConfig,
 ) -> impl Stream<Item = Result<UsageIntervalEntity>> {
     let storage = Arc::new(storage);
     let start = print_config.start;

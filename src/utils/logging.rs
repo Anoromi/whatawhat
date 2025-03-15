@@ -29,7 +29,7 @@ pub fn enable_logging(
             env!("CARGO_PKG_NAME").replace("-", "_"),
         )))
         .with_writer(stdout.and(appender))
-        .compact()
+        .pretty()
         .init();
     Ok(())
 }
