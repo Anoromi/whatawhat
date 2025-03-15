@@ -96,6 +96,8 @@ pub fn create_application_default_path() -> Result<PathBuf> {
         }
     };
 
+    println!("path {path:?}");
+
     match std::fs::create_dir_all(&path) {
         Ok(_) => Ok(path),
         Err(v) if v.kind() == io::ErrorKind::AlreadyExists => Ok(path),
