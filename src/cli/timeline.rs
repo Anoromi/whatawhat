@@ -55,13 +55,13 @@ pub struct TimelineCommand {
     #[arg(
         long = "start",
         short,
-        help = "Start of the range. Examples are 'yesterday', '1 hour ago', '15/03/2025'"
+        help = "Start of the range. Examples are \"yesterday\", \"1 hour ago\", \"15/03/2025\", \"12:00 16/03/2025\", \"12 AM 16/03/2025\""
     )]
     start_date: Option<String>,
     #[arg(
         long = "end",
         short,
-        help = "Start of the range. Examples are 'last week', '1 hour ago', '15/03/2025'"
+        help = "End of the range. Examples are \"yesterday\", \"1 hour ago\", \"15/03/2025\", \"12:00 16/03/2025\", \"12 AM 16/03/2025\""
     )]
     end_date: Option<String>,
     #[arg(long, default_value_t = DateStyle::Uk, help = "Style of dates used during parsing. For Uk it's day/month/year. For Us it's month/day/year")]
@@ -118,7 +118,7 @@ pub async fn process_timeline_command(
         interval,
         treat_as_days,
         min_percentage,
-        use_processes: use_window_name,
+        use_processes,
         afk,
     }: TimelineCommand,
 ) -> Result<()> {
@@ -141,10 +141,10 @@ pub async fn process_timeline_command(
         },
     );
 
-    if use_window_name {
-        print_window_grouping(interval, min_percentage, afk, results).await?;
-    } else {
+    if use_processes {
         print_processes_grouping(interval, min_percentage, afk, results).await?;
+    } else {
+        print_window_grouping(interval, min_percentage, afk, results).await?;
     }
     Ok(())
 }
@@ -168,7 +168,7 @@ fn parse_values(
         return Err(Args::command()
             .error(
                 clap::error::ErrorKind::ValueValidation,
-                "Print interval must be present",
+                format!("Can't create an interval using {} and {}", interval.duration, interval.option),
             )
             .into());
     };

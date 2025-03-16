@@ -9,6 +9,7 @@ use crate::cli::create_application_default_path;
 pub fn enable_logging(
     application_data_path: Option<&str>,
     log_level: Option<LevelFilter>,
+    show_std: bool
 ) -> Result<()> {
     let application_data_path = match application_data_path {
         Some(v) => PathBuf::from(v),
@@ -16,7 +17,7 @@ pub fn enable_logging(
     };
     let appender = tracing_appender::rolling::daily(application_data_path, "app");
 
-    let stdout = std::io::stdout;
+    let stdout = std::io::stdout.with_filter(move |_| show_std);
 
     let level =
         log_level.map(|v| v.to_string()).unwrap_or_else(|| std::env::var("RUST_LOG").unwrap_or_else(|_| "debug".into()));

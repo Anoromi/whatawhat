@@ -1,4 +1,4 @@
-use std::{fmt::Debug, pin::Pin};
+use std::{fmt::{Debug, Display}, pin::Pin};
 
 use anyhow::Result;
 use chrono::{DateTime, Duration, NaiveTime, TimeZone, Timelike, Utc};
@@ -16,6 +16,18 @@ pub enum TimeOption {
     Hours,
     Minutes,
     Seconds,
+}
+
+impl Display for TimeOption {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TimeOption::Weeks => write!(f, "weeks"),
+            TimeOption::Days => write!(f, "days"),
+            TimeOption::Hours => write!(f, "hours"),
+            TimeOption::Minutes => write!(f, "minutes"),
+            TimeOption::Seconds => write!(f, "seconds"),
+        }
+    }
 }
 
 /// Intended for creating simple to understand intervals.

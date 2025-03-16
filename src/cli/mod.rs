@@ -61,7 +61,7 @@ pub async fn run_cli() -> Result<()> {
     } else {
         None
     };
-    enable_logging(None, logging_level)?;
+    enable_logging(None, logging_level, args.log)?;
 
     match args.commands {
         Commands::Init { .. } => {
