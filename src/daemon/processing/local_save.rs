@@ -13,7 +13,7 @@ use super::module::EventProcessor;
 
 /// Represents saving module. Saving module main goal is to bridge
 /// [ProcessingModule](super::ProcessingModule) and [RecordStorage]
-/// In the future it might also combine multple savers, like color storage + record storage.
+/// In the future it might also combine multiple savers, like color storage + record storage.
 pub struct LocalSaver<R: RecordStorage> {
     records_storage: R,
     current_handle: Option<R::RecordFile>,
@@ -36,9 +36,6 @@ impl<R: RecordStorage> LocalSaver<R> {
         match current_file {
             Some(mut file) if file.get_date() != now => {
                 file.flush().await?;
-                // This shouldn't be the responsibility of LocalSaver.
-                // TODO detach it somewhere
-                self.records_storage.compact_file(file).await?
             }
             Some(v) => return Ok(v),
             None => {}

@@ -24,14 +24,10 @@ use crate::{
 
 use super::entities::{UsageIntervalEntity, UsageRecordEntity};
 
-/// Intended for abstracting operations for saving the records in a directory
+/// Interface for abstracting data save
 pub trait RecordStorage {
     type RecordFile: RecordFileHandle;
 
-    fn compact_files(&self) -> impl Future<Output = Result<()>>;
-    fn compact_file(&self, _record_file: Self::RecordFile) -> impl Future<Output = Result<()>> {
-        async { self.compact_files().await }
-    }
     fn create_or_append_record(
         &self,
         date: NaiveDate,
@@ -48,10 +44,6 @@ where
     T::Target: RecordStorage,
 {
     type RecordFile = <T::Target as RecordStorage>::RecordFile;
-
-    fn compact_files(&self) -> impl Future<Output = Result<()>> {
-        self.deref().compact_files()
-    }
 
     fn create_or_append_record(
         &self,
@@ -127,11 +119,6 @@ impl RecordStorageImpl {
 
 impl RecordStorage for RecordStorageImpl {
     type RecordFile = UsageIntervalRecordFile<File>;
-
-    /// this is intended for future use to reduce file size
-    async fn compact_files(&self) -> Result<()> {
-        unimplemented!("Api isn't ready")
-    }
 
     async fn create_or_append_record(&self, date: chrono::NaiveDate) -> Result<Self::RecordFile> {
         let file_name = date_to_record_name(date);

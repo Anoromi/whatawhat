@@ -22,8 +22,9 @@ const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(1);
 
 /// Represents the starting point for the daemon
 pub async fn start_daemon(dir: PathBuf) -> Result<()> {
-    // TODO
+
     std::env::set_current_dir("/")?;
+
     let (sender, receiver) = mpsc::channel::<RecordEvent>(10);
     let manager = GenericWindowManager::new()?;
 
@@ -41,14 +42,14 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
 
     if let Err(collection_result) = collection_result {
         error!(
-            "Collection module resulted in an error {}",
+            "Collection module got an error {:?}",
             collection_result
         );
     }
 
     if let Err(processing_result) = processing_result {
         error!(
-            "Processing module resulted in an error {}",
+            "Processing module got an error {:?}",
             processing_result
         );
     }

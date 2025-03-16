@@ -56,5 +56,6 @@ pub fn restart_server() -> Result<()> {
     println!("Spawning");
     #[allow(clippy::zombie_processes)]
     let _ = command.spawn()?;
+    println!("Success");
     Ok(())
 }

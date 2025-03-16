@@ -93,9 +93,8 @@ pub fn create_application_default_path() -> Result<PathBuf> {
         }
         #[cfg(target_os = "linux")]
         {
-            let mut path = PathBuf::from(
-                env::var("XDG_STATE_HOME")
-                    .map(|v| PathBuf::from(v))
+            let mut path = env::var("XDG_STATE_HOME")
+                    .map(PathBuf::from)
                     .or_else(|_| {
                         env::var("HOME").map(|home| {
                             let mut path = PathBuf::from(home);
@@ -103,14 +102,11 @@ pub fn create_application_default_path() -> Result<PathBuf> {
                             path
                         })
                     })
-                    .expect("Couldn't find neither XDG_STATE_HOME nor HOME"),
-            );
+                    .expect("Couldn't find neither XDG_STATE_HOME nor HOME");
             path.push("whatawhat");
             path
         }
     };
-
-    println!("path {path:?}");
 
     match std::fs::create_dir_all(&path) {
         Ok(_) => Ok(path),

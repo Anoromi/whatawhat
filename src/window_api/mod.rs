@@ -1,3 +1,7 @@
+//! Contains logic for extracting records from different environments.
+//! [GenericWindowManager] is the main artifact of this module that abstracts
+//! the operations.
+
 #[cfg(feature = "win")]
 pub mod win;
 #[cfg(feature = "x11")]

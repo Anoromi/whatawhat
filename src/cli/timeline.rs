@@ -52,22 +52,38 @@ impl Display for DateStyle {
 
 #[derive(Debug, Parser)]
 pub struct TimelineCommand {
-    #[arg(long = "start", short, help = "Start of the range. Examples are 'yesterday', '1 hour ago', '15/03/2025'")]
+    #[arg(
+        long = "start",
+        short,
+        help = "Start of the range. Examples are 'yesterday', '1 hour ago', '15/03/2025'"
+    )]
     start_date: Option<String>,
-    #[arg(long = "end", short, help = "Start of the range. Examples are 'yesterday', '1 hour ago', '15/03/2025'")]
+    #[arg(
+        long = "end",
+        short,
+        help = "Start of the range. Examples are 'last week', '1 hour ago', '15/03/2025'"
+    )]
     end_date: Option<String>,
     #[arg(long, default_value_t = DateStyle::Uk, help = "Style of dates used during parsing. For Uk it's day/month/year. For Us it's month/day/year")]
     date_style: DateStyle,
-    #[arg(long = "days", default_value_t = false, help = "Take inputs as whole days. For example if start and end are both 15/03/2025 this option allows to extract the whole day.")]
+    #[arg(
+        long = "days",
+        default_value_t = false,
+        help = "Take inputs as whole days. For example if start and end are both 15/03/2025 this option allows to extract the whole day"
+    )]
     treat_as_days: bool,
     #[command(flatten)]
     interval: PrintInterval,
-    #[arg(short = 'p', long = "percentage", default_value_t = Percentage::new_opt(1.).unwrap())]
+    #[arg(short = 'p', long = "percentage", help = "Filter apps to have at least specified percentage", default_value_t = Percentage::new_opt(1.).unwrap()) ]
     min_percentage: Percentage,
-    #[arg(short, long = "window", default_value_t = false)]
-    use_window_name: bool,
+    #[arg(short, long = "processes", help = "Ignore window names")]
+    use_processes: bool,
 
-    #[arg(short, long, help = "Include time afk. Person is considered afk after 2 minutes of idle time.")]
+    #[arg(
+        short,
+        long,
+        help = "Include time afk. Person is considered afk after 2 minutes of idle time."
+    )]
     afk: bool,
 }
 
@@ -80,9 +96,15 @@ struct DaemonParams {
 #[derive(Debug, Clone, Copy, clap::Args)]
 #[command(flatten_help = true)]
 pub struct PrintInterval {
-    #[arg(short, help = "Duration of interval. Combines with option to create interval -d 15 -o minutes")]
+    #[arg(
+        short,
+        help = "Duration of interval. Combines with option to create interval -d 15 -o minutes"
+    )]
     duration: u32,
-    #[arg(short, help = "Time option of interval. Combines with option to create interval -d 15 -o minutes")]
+    #[arg(
+        short,
+        help = "Time option of interval. Combines with option to create interval -d 15 -o minutes"
+    )]
     option: TimeOption,
 }
 
@@ -96,7 +118,7 @@ pub async fn process_timeline_command(
         interval,
         treat_as_days,
         min_percentage,
-        use_window_name,
+        use_processes: use_window_name,
         afk,
     }: TimelineCommand,
 ) -> Result<()> {

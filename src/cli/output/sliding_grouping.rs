@@ -417,13 +417,6 @@ mod sliding_groupnig_test {
         )
         .await?;
 
-        for v in grouping.iter() {
-            for interval in v.1.as_ref().unwrap() {
-                println!("{:?}", interval);
-            }
-            println!()
-        }
-
         assert_eq!(
             vec_duration(grouping[0].1.as_ref().unwrap().iter()).num_seconds(),
             30
