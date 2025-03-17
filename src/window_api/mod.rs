@@ -19,7 +19,10 @@ use anyhow::Result;
 
 #[derive(Debug)]
 pub struct ActiveWindowData {
+    /// Name of the window. For example 'bash in hello' or 'Document 1' or 'Vibing in YouTube -
+    /// Chrome'
     pub window_title: Arc<str>,
+    /// Full path to an executable. For example /home/etc/nvim
     pub process_name: Arc<str>,
 }
 

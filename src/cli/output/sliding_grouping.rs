@@ -77,9 +77,9 @@ impl SlidingInterval {
 
 }
 
-/// Intended for creating a start for a timeline that's easier to comprehend.
-/// It's easier to understand if your timeline starts at 01:10:00 than 01:11:32.
-fn clean_time_start<Tz: TimeZone>(
+/// Creates a start of a timeline that's easier to comprehend.
+/// It's easier to interpret if your timeline starts at 01:10:00 than at 01:11:32.
+pub fn clean_time_start<Tz: TimeZone>(
     rough_start: DateTime<Tz>,
     scale: &SlidingInterval,
 ) -> DateTime<Tz> {
