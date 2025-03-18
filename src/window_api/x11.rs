@@ -2,11 +2,11 @@ use anyhow::Result;
 use sysinfo::Pid;
 use tracing::instrument;
 use xcb::{
+    Connection,
     screensaver::{QueryInfo, QueryInfoReply},
     x::{
-        self, Atom, Drawable, GetProperty, GrabServer, InternAtom, UngrabServer, Window, ATOM_ANY,
+        self, ATOM_ANY, Atom, Drawable, GetProperty, GrabServer, InternAtom, UngrabServer, Window,
     },
-    Connection,
 };
 
 use super::{ActiveWindowData, WindowManager};
@@ -19,11 +19,11 @@ fn get_pid_atom(conn: &Connection) -> Result<Atom> {
     Ok(reply.atom())
 }
 
-fn get_pid(conn: &Connection, window: Window) -> Result<Option<u32>> {
+fn get_pid(conn: &Connection, window: Window, pid_atom: Atom) -> Result<Option<u32>> {
     let result = conn.wait_for_reply(conn.send_request(&GetProperty {
         delete: false,
         window,
-        property: get_pid_atom(conn)?,
+        property: pid_atom,
         r#type: ATOM_ANY,
         long_offset: 0,
         long_length: 1,
@@ -55,11 +55,11 @@ fn get_active_window_atom(conn: &Connection) -> Result<Atom> {
     Ok(active_window_atom.atom())
 }
 
-fn get_active_window(conn: &Connection, root: &Window) -> Result<Window> {
+fn get_active_window(conn: &Connection, root: &Window, active_window_atom: Atom) -> Result<Window> {
     let result = conn.wait_for_reply(conn.send_request(&GetProperty {
         delete: false,
         window: *root,
-        property: get_active_window_atom(conn)?,
+        property: active_window_atom,
         r#type: ATOM_ANY,
         long_offset: 0,
         long_length: 1,
@@ -75,11 +75,11 @@ fn get_net_wm_name_atom(conn: &Connection) -> Result<Atom> {
     Ok(response.atom())
 }
 
-pub fn get_name(conn: &Connection, window: Window) -> Result<String> {
+pub fn get_name(conn: &Connection, window: Window, wm_name_atom: Atom) -> Result<String> {
     let wm_name = conn.wait_for_reply(conn.send_request(&x::GetProperty {
         delete: false,
         window,
-        property: get_net_wm_name_atom(conn)?,
+        property: wm_name_atom,
         r#type: x::ATOM_ANY,
         long_offset: 0,
         long_length: 1024,
@@ -92,30 +92,37 @@ pub fn get_name(conn: &Connection, window: Window) -> Result<String> {
 pub struct LinuxWindowManager {
     connection: Connection,
     preferred_screen: i32,
+    active_window_atom: Atom,
+    window_name_atom: Atom,
+    pid_atom: Atom,
 }
 
 impl LinuxWindowManager {
     pub fn new() -> Result<Self> {
         let (connection, preferred_screen) = xcb::Connection::connect(None)?;
+        let active_window_atom = get_active_window_atom(&connection)?;
+        let name_atom = get_net_wm_name_atom(&connection)?;
+        let pid_atom = get_pid_atom(&connection)?;
         Ok(Self {
             connection,
             preferred_screen,
+            active_window_atom,
+            window_name_atom: name_atom,
+            pid_atom,
         })
     }
 
-    #[instrument(skip(conn))]
-    pub fn get_active_internal(
-        conn: &Connection,
-        preferred_screen: u32,
-    ) -> Result<ActiveWindowData> {
-        let setup = conn.get_setup();
+    #[instrument(skip(self))]
+    fn get_active_inner(&self) -> Result<ActiveWindowData> {
+        let setup = self.connection.get_setup();
 
         // Currently the application only supports 1 x11 screen.
-        let default_window = setup.roots().nth(preferred_screen as usize).unwrap().root();
+        let default_window = setup.roots().nth(self.preferred_screen.max(0) as usize).unwrap().root();
 
-        let active_window = get_active_window(conn, &default_window)?;
-        let window_name = get_name(conn, active_window)?;
-        let process = get_pid(conn, active_window)?.unwrap();
+        let active_window =
+            get_active_window(&self.connection, &default_window, self.active_window_atom)?;
+        let window_name = get_name(&self.connection, active_window, self.window_name_atom)?;
+        let process = get_pid(&self.connection, active_window, self.pid_atom)?.unwrap();
         let process_name = get_process_name(process)?.unwrap();
         Ok(ActiveWindowData {
             window_title: window_name.into(),
@@ -128,11 +135,10 @@ impl WindowManager for LinuxWindowManager {
     #[instrument(skip(self))]
     fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
         assert!(self.preferred_screen >= 0);
-        let screen_num: u32 = self.preferred_screen.try_into().unwrap();
 
         let _ = self.connection.send_request(&GrabServer {});
 
-        let result = Self::get_active_internal(&self.connection, screen_num);
+        let result = self.get_active_inner();
         let _ = self.connection.send_request(&UngrabServer {});
         result
     }
@@ -140,7 +146,11 @@ impl WindowManager for LinuxWindowManager {
     #[instrument(skip(self))]
     fn get_idle_time(&mut self) -> Result<u32> {
         let w = self.connection.get_setup();
-        let wnd = w.roots().nth(self.preferred_screen as usize).unwrap().root();
+        let wnd = w
+            .roots()
+            .nth(self.preferred_screen as usize)
+            .unwrap()
+            .root();
         let idle = self.connection.send_request(&QueryInfo {
             drawable: Drawable::Window(wnd),
         });
