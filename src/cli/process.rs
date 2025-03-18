@@ -1,4 +1,4 @@
-use std::{env, path::Path};
+use std::{env, path::Path, process::Stdio};
 
 use anyhow::Result;
 use sysinfo::{get_current_pid, Signal, System};
@@ -51,6 +51,8 @@ pub fn restart_server() -> Result<()> {
     {
         use std::os::unix::process::CommandExt;
         command.process_group(0);
+        command.stdin(Stdio::null());
+        command.stdout(Stdio::null());
     }
 
     println!("Spawning");

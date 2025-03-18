@@ -29,7 +29,6 @@ fn get_pid(conn: &Connection, window: Window) -> Result<Option<u32>> {
         long_length: 1,
     }))?;
     let result_slice = result.value::<u32>();
-    println!("pid {:?}", result_slice);
     if result_slice.is_empty() {
         return Ok(None);
     }
