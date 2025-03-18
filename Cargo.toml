@@ -2,7 +2,9 @@
 name = "whatawhat"
 version = "0.1.0"
 authors = ["Andrii Zahorulko"]
-edition = "2021"
+description = "Application for monitoring user activity"
+license = "MIT OR Apache-2.0"
+edition = "2024"
 
 [dependencies]
 
@@ -34,7 +36,7 @@ sysinfo = "0.33.1"
 cfg-if = "1.0.0"
 
 [dependencies.xcb]
-version = "*"
+version = "^1.5"
 features = ["screensaver"]
 optional = true
 
