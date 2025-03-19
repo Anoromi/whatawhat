@@ -6,7 +6,7 @@ use sysinfo::{Signal, System, get_current_pid};
 
 use crate::daemon::start_daemon;
 
-use super::create_application_default_path;
+use super::{create_application_default_path, single_thread_runtime};
 
 pub fn kill_previous_servers(name: &Path) {
     let system = System::new_all();
@@ -84,19 +84,31 @@ fn run_linux() {
         .stderr(daemonize::Stdio::devnull())  // Redirect stderr to `/tmp/daemon.err`.
         ;
     match daemonize.start() {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             tracing::error!("Error starting daemon {:?}", e);
-        },
+        }
     };
 
-    tracing::info!("Still standing");
-    tokio::runtime::Builder::new_multi_thread()
-        .build()
-        .unwrap()
-        .block_on(async {
+    let runtime = match single_thread_runtime() {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("Error starting runtime {:?}", e);
+            return;
+        }
+    };
+    runtime.block_on(async {
             tracing::error!("We running something I think");
             start_daemon(create_application_default_path().unwrap()).await.unwrap();
-        });
-    std::process::exit(0);
+    })
+
+    // tracing::info!("Still standing");
+    // tokio::runtime::Builder::new_multi_thread()
+    //     .build()
+    //     .inspect(f)
+    //     .block_on(async {
+    //         tracing::error!("We running something I think");
+    //         start_daemon(create_application_default_path().unwrap()).await.unwrap();
+    //     });
+    // std::process::exit(0);
 }

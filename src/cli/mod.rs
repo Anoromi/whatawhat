@@ -7,7 +7,7 @@ use std::{env, path::PathBuf};
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use process::{kill_previous_servers, restart_server};
-use timeline::{process_timeline_command, TimelineCommand};
+use timeline::{TimelineCommand, process_timeline_command};
 use tokio::io;
 use tracing::level_filters::LevelFilter;
 
@@ -53,7 +53,7 @@ enum Commands {
     Stop {},
 }
 
-pub async fn run_cli() -> Result<()> {
+pub fn run_cli() -> Result<()> {
     let args = Args::parse();
 
     let logging_level = if args.log {
@@ -74,10 +74,15 @@ pub async fn run_cli() -> Result<()> {
             Ok(())
         }
         Commands::Serve { .. } => {
-            start_daemon(create_application_default_path()?).await?;
+            let path = create_application_default_path()?;
+            single_thread_runtime()?.block_on(async move { start_daemon(path).await })?;
             Ok(())
         }
-        Commands::Timeline { command } => process_timeline_command(command).await,
+        Commands::Timeline { command } => {
+            multi_thread_runtime()?
+                .block_on(async move { process_timeline_command(command).await })?;
+            Ok(())
+        }
     }
 }
 
@@ -93,15 +98,15 @@ pub fn create_application_default_path() -> Result<PathBuf> {
         #[cfg(target_os = "linux")]
         {
             let mut path = env::var("XDG_STATE_HOME")
-                    .map(PathBuf::from)
-                    .or_else(|_| {
-                        env::var("HOME").map(|home| {
-                            let mut path = PathBuf::from(home);
-                            path.push(".local/state");
-                            path
-                        })
+                .map(PathBuf::from)
+                .or_else(|_| {
+                    env::var("HOME").map(|home| {
+                        let mut path = PathBuf::from(home);
+                        path.push(".local/state");
+                        path
                     })
-                    .expect("Couldn't find neither XDG_STATE_HOME nor HOME");
+                })
+                .expect("Couldn't find neither XDG_STATE_HOME nor HOME");
             path.push("whatawhat");
             path
         }
@@ -112,4 +117,15 @@ pub fn create_application_default_path() -> Result<PathBuf> {
         Err(v) if v.kind() == io::ErrorKind::AlreadyExists => Ok(path),
         Err(v) => Err(v.into()),
     }
+}
+
+pub fn single_thread_runtime() -> Result<tokio::runtime::Runtime> {
+    Ok(tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?)
+}
+pub fn multi_thread_runtime() -> Result<tokio::runtime::Runtime> {
+    Ok(tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?)
 }
