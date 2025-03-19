@@ -1,8 +1,7 @@
 use std::{env, path::Path, process::Stdio};
 
 use anyhow::Result;
-use sysinfo::{get_current_pid, Signal, System};
-
+use sysinfo::{Signal, System, get_current_pid};
 
 pub fn kill_previous_servers(name: &Path) {
     let system = System::new_all();
@@ -51,8 +50,10 @@ pub fn restart_server() -> Result<()> {
     {
         use std::os::unix::process::CommandExt;
         command.process_group(0);
-        command.stdin(Stdio::null());
-        command.stdout(Stdio::null());
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
     }
 
     println!("Spawning");
