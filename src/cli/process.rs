@@ -1,4 +1,4 @@
-use std::{env, path::Path, process::Stdio};
+use std::{env, os, path::Path, process::Stdio};
 
 use anyhow::Result;
 use daemonize::Daemonize;
@@ -88,6 +88,8 @@ fn run_linux() {
         .build()
         .unwrap()
         .block_on(async {
+            tracing::error!("We running something I think");
             start_daemon(create_application_default_path().unwrap()).await.unwrap();
         });
+    std::process::exit(0);
 }
