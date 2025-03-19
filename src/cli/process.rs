@@ -1,8 +1,9 @@
-use std::{env, os, path::Path, process::Stdio};
+use std::{env, os, path::Path, process::Stdio, time::Duration};
 
 use anyhow::Result;
 use daemonize::Daemonize;
 use sysinfo::{Signal, System, get_current_pid};
+use tokio::time::sleep;
 
 use crate::daemon::start_daemon;
 
@@ -98,9 +99,18 @@ fn run_linux() {
         }
     };
     runtime.block_on(async {
-            tracing::error!("We running something I think");
-            start_daemon(create_application_default_path().unwrap()).await.unwrap();
-    })
+        tracing::error!("We running something I think");
+        tokio::join!(
+            start_daemon(create_application_default_path().unwrap()),
+            async {
+                loop {
+                    tracing::warn!("Still runningu");
+                    sleep(Duration::from_secs(5)).await
+                }
+            }
+        );
+    });
+    
 
     // tracing::info!("Still standing");
     // tokio::runtime::Builder::new_multi_thread()
