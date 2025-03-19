@@ -86,9 +86,11 @@ fn run_linux() {
     match daemonize.start() {
         Ok(_) => {},
         Err(e) => {
-            tracing::error!("Error starting daemon {:?}", e)
+            tracing::error!("Error starting daemon {:?}", e);
         },
     };
+
+    tracing::info!("Still standing");
     tokio::runtime::Builder::new_multi_thread()
         .build()
         .unwrap()
