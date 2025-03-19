@@ -78,8 +78,8 @@ fn run_linux() {
         //.pid_file("/tmp/test.pid") // Every method except `new` and `start`
         //.chown_pid_file(true)      // is optional, see `Daemonize` documentation
         .working_directory("/") // for default behaviour.
-        .group(0)        // or group id.
-        .umask(0o777)    // Set umask, `0o027` by default.
+        // .group(0)        // or group id.
+        // .umask(0o777)    // Set umask, `0o027` by default.
         .stdout(daemonize::Stdio::devnull())  // Redirect stdout to `/tmp/daemon.out`.
         .stderr(daemonize::Stdio::devnull())  // Redirect stderr to `/tmp/daemon.err`.
         ;
