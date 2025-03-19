@@ -4,6 +4,10 @@ use anyhow::Result;
 use daemonize::Daemonize;
 use sysinfo::{Signal, System, get_current_pid};
 
+use crate::daemon::start_daemon;
+
+use super::create_application_default_path;
+
 pub fn kill_previous_servers(name: &Path) {
     let system = System::new_all();
     let current_id = get_current_pid().unwrap();
@@ -79,5 +83,11 @@ fn run_linux() {
         .stdout(daemonize::Stdio::devnull())  // Redirect stdout to `/tmp/daemon.out`.
         .stderr(daemonize::Stdio::devnull())  // Redirect stderr to `/tmp/daemon.err`.
         ;
-    daemonize.start().unwrap()
+    daemonize.start().unwrap();
+    tokio::runtime::Builder::new_multi_thread()
+        .build()
+        .unwrap()
+        .block_on(async {
+            start_daemon(create_application_default_path().unwrap()).await.unwrap();
+        });
 }
