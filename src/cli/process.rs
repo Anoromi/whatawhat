@@ -1,6 +1,7 @@
 use std::{env, path::Path, process::Stdio};
 
 use anyhow::Result;
+use daemonize::Daemonize;
 use sysinfo::{Signal, System, get_current_pid};
 
 pub fn kill_previous_servers(name: &Path) {
@@ -37,6 +38,11 @@ pub fn restart_server() -> Result<()> {
     // the job in most cases.
     let process_name = env::current_exe().expect("Can't operate without an executable");
     kill_previous_servers(&process_name);
+    #[cfg(unix)]
+    {
+        run_linux();
+    }
+
     let mut command = std::process::Command::new(process_name);
     command.args(["serve"]);
 
@@ -61,4 +67,17 @@ pub fn restart_server() -> Result<()> {
     let _ = command.spawn()?;
     println!("Success");
     Ok(())
+}
+
+fn run_linux() {
+    let daemonize = Daemonize::new()
+        //.pid_file("/tmp/test.pid") // Every method except `new` and `start`
+        //.chown_pid_file(true)      // is optional, see `Daemonize` documentation
+        .working_directory("/") // for default behaviour.
+        .group(0)        // or group id.
+        .umask(0o777)    // Set umask, `0o027` by default.
+        .stdout(daemonize::Stdio::devnull())  // Redirect stdout to `/tmp/daemon.out`.
+        .stderr(daemonize::Stdio::devnull())  // Redirect stderr to `/tmp/daemon.err`.
+        ;
+    daemonize.start().unwrap()
 }
