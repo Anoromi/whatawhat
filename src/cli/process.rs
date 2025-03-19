@@ -83,7 +83,12 @@ fn run_linux() {
         .stdout(daemonize::Stdio::devnull())  // Redirect stdout to `/tmp/daemon.out`.
         .stderr(daemonize::Stdio::devnull())  // Redirect stderr to `/tmp/daemon.err`.
         ;
-    daemonize.start().unwrap();
+    match daemonize.start() {
+        Ok(_) => {},
+        Err(e) => {
+            tracing::error!("Error starting daemon {:?}", e)
+        },
+    };
     tokio::runtime::Builder::new_multi_thread()
         .build()
         .unwrap()
