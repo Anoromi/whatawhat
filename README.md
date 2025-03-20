@@ -74,7 +74,5 @@ Whatawhat doesn't run startup by default. This needs to be configured yourself.
 For Windows you can refer to [this][https://www.howtogeek.com/208224/how-to-add-a-program-to-startup-in-windows/]:
     - Create a bat file with `whatawhat init` in startup directory ("%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup).
 For Linux you can refer to [this][https://askubuntu.com/questions/814/how-to-run-scripts-on-start-up].
-    - Create a bat file with `whatawhat init` in startup directory ("%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup).
-    - crontab -e
 
 
