@@ -1,3 +1,5 @@
+//! Contains logic for extracting records through x11. The implementation uses xcb for communication
+//! with the server.
 
 use anyhow::{Result, anyhow};
 use tracing::error;

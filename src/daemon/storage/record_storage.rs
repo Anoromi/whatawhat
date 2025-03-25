@@ -15,7 +15,7 @@ use tokio::{
         AsyncWriteExt, BufReader,
     },
 };
-use tracing::{trace, warn};
+use tracing::{debug, trace, warn};
 
 use crate::{
     fs::operations::seek_line_backwards,
@@ -24,15 +24,18 @@ use crate::{
 
 use super::entities::{UsageIntervalEntity, UsageRecordEntity};
 
-/// Interface for abstracting data save
+/// Interface for abstracting storage of records.
 pub trait RecordStorage {
     type RecordFile: RecordFileHandle;
 
+    /// Opens or creates a new record file that will be used for storing data.
+    /// Data is supposed to be written into a file for a specific day to increase efficiency.
     fn create_or_append_record(
         &self,
         date: NaiveDate,
     ) -> impl Future<Output = Result<Self::RecordFile>>;
 
+    /// Retrieves data from a record file for a certain day.
     fn get_data_for(
         &self,
         date: NaiveDate,
@@ -67,6 +70,7 @@ pub trait RecordFileHandle {
     fn flush(&mut self) -> impl Future<Output = Result<()>>;
 }
 
+/// The main realization of [RecordStorage]. 
 pub struct RecordStorageImpl {
     record_dir: PathBuf,
 }
@@ -80,7 +84,7 @@ impl RecordStorageImpl {
 
     async fn get_all_inner(&self, path: &Path) -> Result<Vec<UsageIntervalEntity>> {
         let extract = async || -> Result<Vec<UsageIntervalEntity>, std::io::Error> {
-            trace!("Extracting {path:?}");
+            debug!("Extracting {path:?}");
             let file = File::open(path).await?;
             file.lock_shared()?;
             let buffer = BufReader::new(file);
@@ -171,6 +175,7 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin>
         Self { file, date }
     }
 
+    /// Tries to read out previous interval
     async fn extract_line_backwards(file: &mut F) -> Result<String, anyhow::Error> {
         seek_line_backwards(file, &mut vec![0; 1024]).await?;
         let mut last_line = String::new();
@@ -223,10 +228,11 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin>
     }
 }
 
-/// Value used to bridge gap between window transitions. There should be a limit though so that an
+/// Value used to bridge gap between window transitions. There should be a limit, though, so that an
 /// event that happened an hour ago didn't affect new events
 const MAX_MERGE_DURATION: Duration = Duration::seconds(2);
 
+/// Creates an optimal sequence of intervals. 
 fn collapse_records(
     last_interval: Option<UsageIntervalEntity>,
     usage_records: impl IntoIterator<Item = UsageRecordEntity>,
