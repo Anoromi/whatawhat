@@ -10,16 +10,13 @@ use clap::{Parser, Subcommand};
 use daemon_path::to_daemon_path;
 use process::{kill_previous_daemons, restart_daemon};
 use timeline::{TimelineCommand, process_timeline_command};
-use tracing::{error, level_filters::LevelFilter};
+use tracing::level_filters::LevelFilter;
 
-use crate::{
-    daemon::start_daemon,
-    utils::{
+use crate::utils::{
         dir::create_application_default_path,
         logging::{CLI_PREFIX, enable_logging},
         runtime::multi_thread_runtime,
-    },
-};
+    };
 
 #[derive(Parser, Debug)]
 #[command(name = "Whatawhat", version, long_about = None)]
