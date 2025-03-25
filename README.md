@@ -1,13 +1,13 @@
 # Whatawhat
-## A tool for monitoring activity on the computer throughout the day.
+A tool for monitoring activity on the computer throughout the day.
 
-### Why would I want this?
+## Why would I want this?
 - Because it's hard to remember what you've been doing 3 hours ago, let alone 1 week ago.
 - Because having no idea where your time goes will worsen your self-esteem.
 - Because knowing how much you spend on games might help you cope with addictions.
 
 
-### Introducing Whatawhat
+## Introducing Whatawhat
 A simple cli all-in-one tool for monitoring activity. The only tool you need is whatawhat cli and you're set.
 
 **No runtime required.** No python, no node. The application is a single executable that takes up 1MB during execution.
@@ -16,15 +16,15 @@ A simple cli all-in-one tool for monitoring activity. The only tool you need is 
 
 **Everything is local.** As long as your computer is safe, your data is safe.
 
-### Installation
+## Installation
 
-#### Windows
+### Windows
 ```bash
 cargo install -F win whatawhat
 ```
 
 
-#### X11 Linux
+### X11 Linux
 To compile and run the application you need xcb and xscreensaver.
 Some distros (like Manjaro) will have them preinstalled.
 
@@ -38,8 +38,14 @@ Then use cargo install to build the program:
 cargo install -F x11 whatawhat
 ```
 
+## Usage
+When you're first starting out it's recommended to run whatawhat init. This will start the daemon for the current session.
 
-### Examples
+Now you can use the `whatawhat timeline` to get different data about your activity.
+
+For details on how to run the deamon on boot refer to [Autostart](#autostart)
+
+## Examples
 
 Get application usage for this week.
 ```
@@ -67,14 +73,19 @@ View what YouTube videos you've been watching with grep
 whatawhat.exe timeline -d 1 -o minutes --start "today" --days | grep YouTube
 ```
 
-### Notes
+## Autostart
 
 Whatawhat doesn't run startup by default. This needs to be configured yourself.
 
-For Windows you can refer to [this][https://www.howtogeek.com/208224/how-to-add-a-program-to-startup-in-windows/]:
-    - Create a bat file with `whatawhat init` in startup directory ("%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup).
-For Linux you can refer to [this][https://askubuntu.com/questions/814/how-to-run-scripts-on-start-up].
-    - Create a bat file with `whatawhat init` in startup directory ("%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup).
-    - crontab -e
+For Windows you can refer to [this](https://www.howtogeek.com/208224/how-to-add-a-program-to-startup-in-windows/):
+ - Create a shortcut to whatawhat-daemon.exe.
+ - Put the shortcut into the startup folder.
+ - The daemon will now autostart on boot.
+
+On Linux it's best to use autostart utilities provided by Gnome, KDE Plasma, etc.:
+ - Add a new process on startup.
+ - Specify the full path to the daemon (Usually `/home/user/.cargo/bin/whatawhat-daemon.exe`).
+ - The daemon will now autostart on boot.
+
 
 

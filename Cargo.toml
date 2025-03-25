@@ -1,11 +1,15 @@
 [package]
 name = "whatawhat"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Andrii Zahorulko"]
 description = "Application for monitoring user activity"
 license = "MIT OR Apache-2.0"
 edition = "2024"
 default-run = "whatawhat"
+rust-version = "1.85"
+categories = ["cli", "daemon", "tools", "traking"]
+
+
 
 [dependencies]
 
