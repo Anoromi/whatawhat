@@ -17,10 +17,7 @@ use tokio::{
 };
 use tracing::{debug, trace, warn};
 
-use crate::{
-    fs::operations::seek_line_backwards,
-    utils::time::date_to_record_name,
-};
+use crate::{fs::operations::seek_line_backwards, utils::time::date_to_record_name};
 
 use super::entities::{UsageIntervalEntity, UsageRecordEntity};
 
@@ -65,12 +62,12 @@ where
 
 pub trait RecordFileHandle {
     fn append(&mut self, usage_records: Vec<UsageRecordEntity>)
-        -> impl Future<Output = Result<()>>;
+    -> impl Future<Output = Result<()>>;
     fn get_date(&self) -> NaiveDate;
     fn flush(&mut self) -> impl Future<Output = Result<()>>;
 }
 
-/// The main realization of [RecordStorage]. 
+/// The main realization of [RecordStorage].
 pub struct RecordStorageImpl {
     record_dir: PathBuf,
 }
@@ -192,6 +189,11 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin>
     }
 
     async fn append_with_file(file: &mut F, usage_record: Vec<UsageRecordEntity>) -> Result<()> {
+        // The process of appending a record is as such.
+        // 1. Get last interval from the file.
+        // 2. Collapse the interval with added usage_records
+        // 3. Overwrite last interval with updated interval and append new intervals.
+
         file.seek(std::io::SeekFrom::End(0)).await?;
 
         let last_line = Self::extract_line_backwards(file).await?;
@@ -232,7 +234,7 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin>
 /// event that happened an hour ago didn't affect new events
 const MAX_MERGE_DURATION: Duration = Duration::seconds(2);
 
-/// Creates an optimal sequence of intervals. 
+/// Creates an optimal sequence of intervals.
 fn collapse_records(
     last_interval: Option<UsageIntervalEntity>,
     usage_records: impl IntoIterator<Item = UsageRecordEntity>,
@@ -243,23 +245,26 @@ fn collapse_records(
     }
 
     for record in usage_records {
+        dbg!(&intervals);
+        dbg!(intervals.last_mut().map(|v| v.end()), record.moment);
         match intervals.last_mut() {
             Some(interval)
                 if interval.window_name == record.window_name
                     && interval.process_name == record.process_name
-                    && interval.afk == record.afk =>
+                    && interval.afk == record.afk
+                    && record.moment - interval.end() < MAX_MERGE_DURATION =>
             {
                 interval.set_end(record.moment)
             }
-            Some(_) | None => {
+            Some(previous_interval)
+                if record.moment - previous_interval.end() < MAX_MERGE_DURATION =>
+            {
                 let mut next_interval: UsageIntervalEntity = record.into();
-                match intervals.last() {
-                    Some(previous) if next_interval.start - previous.end() < MAX_MERGE_DURATION => {
-                        next_interval.start = previous.end();
-                    }
-                    _ => (),
-                }
+                next_interval.start = previous_interval.end();
                 intervals.push(next_interval);
+            }
+            Some(_) | None => {
+                intervals.push(record.into());
             }
         }
     }
@@ -278,7 +283,7 @@ mod tests {
 
     use crate::daemon::storage::{
         entities::{UsageIntervalEntity, UsageRecordEntity},
-        record_storage::{collapse_records, RecordFileHandle, RecordStorage, RecordStorageImpl},
+        record_storage::{RecordFileHandle, RecordStorage, RecordStorageImpl, collapse_records},
     };
 
     use super::UsageIntervalRecordFile;
@@ -382,7 +387,7 @@ mod tests {
     async fn test_record_storage_basic() -> Result<()> {
         let dir = tempdir()?;
         let storage = RecordStorageImpl::new(dir.path().to_owned())?;
-        let mut record = storage.create_or_append_record(START_DATE.date()).await?;
+        let mut record_file = storage.create_or_append_record(START_DATE.date()).await?;
         let records = [
             UsageRecordEntity {
                 window_name: "test".into(),
@@ -397,11 +402,11 @@ mod tests {
                 afk: false,
             },
         ];
-        record.append_inner(vec![records[0].clone()]).await?;
+        record_file.append_inner(vec![records[0].clone()]).await?;
 
-        record.append_inner(vec![records[1].clone()]).await?;
+        record_file.append_inner(vec![records[1].clone()]).await?;
 
-        record.flush().await?;
+        record_file.flush().await?;
 
         let values = storage.get_data_for(START_DATE.into()).await?;
 
@@ -434,7 +439,7 @@ mod tests {
             UsageRecordEntity {
                 window_name: "test 2".into(),
                 process_name: "test process 2".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(5),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(2),
                 afk: false,
             },
         ];
@@ -446,17 +451,11 @@ mod tests {
 
         record.flush().await?;
 
-        let values = storage.get_data_for(START_DATE.into()).await?;
+        let stored = storage.get_data_for(START_DATE.into()).await?;
 
-        assert_eq!(
-            values,
-            vec![
-                records[0].clone().into(),
-                UsageIntervalEntity::from(records[1].clone())
-                    .with_start(records[0].moment)
-                    .with_duration(Duration::seconds(5))
-            ]
-        );
+        let collapsed = collapse_records(None, records.clone());
+
+        assert_eq!(stored, collapsed);
 
         Ok(())
     }
@@ -471,8 +470,8 @@ mod tests {
                 afk: false,
             },
             UsageRecordEntity {
-                window_name: "test 2".into(),
-                process_name: "test process 2".into(),
+                window_name: "test".into(),
+                process_name: "test process".into(),
                 moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(1),
                 afk: false,
             },
@@ -487,24 +486,55 @@ mod tests {
 
         assert_eq!(values.len(), 2);
         assert_eq!(
-            values,
-            vec![
-                records[0].clone().into(),
-                UsageIntervalEntity::from(records[1].clone())
-                    .with_start(records[0].moment)
-                    .with_duration(Duration::seconds(5))
-            ]
+            values[0],
+            UsageIntervalEntity::from(records[0].clone()).with_duration(Duration::seconds(1)),
+        );
+        assert_eq!(
+            values[1],
+            UsageIntervalEntity::from(records[2].clone())
+                .with_start(records[2].moment)
+                .with_duration(Duration::seconds(0))
         );
 
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_record_collapsing_cutoff() -> Result<()> {
+    async fn test_record_collapsing_long_time_between_cutooff() -> Result<()> {
+        let interval = UsageIntervalEntity {
+            window_name: "test".into(),
+            process_name: "test process".into(),
+            start: Utc.from_utc_datetime(&START_DATE),
+            duration: Duration::seconds(10),
+            afk: false,
+        };
+
+        let records = [UsageRecordEntity {
+            window_name: "test".into(),
+            process_name: "test process".into(),
+            moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(15),
+            afk: false,
+        }];
+
+        let values = collapse_records(Some(interval.clone()), records.clone());
+
+        assert_eq!(values[0], interval.with_duration(Duration::seconds(10)),);
+        assert_eq!(
+            values[1],
+            UsageIntervalEntity::from(records[0].clone())
+                .with_start(records[0].moment)
+                .with_duration(Duration::seconds(0))
+        );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_record_collapsing_long_time_between_different_processes_cutooff() -> Result<()> {
         let records = [
             UsageRecordEntity {
-                window_name: "test".into(),
-                process_name: "test process".into(),
+                window_name: "previous".into(),
+                process_name: "previous process".into(),
                 moment: Utc.from_utc_datetime(&START_DATE),
                 afk: false,
             },
@@ -517,21 +547,25 @@ mod tests {
             UsageRecordEntity {
                 window_name: "test 2".into(),
                 process_name: "test process 2".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(5),
+                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(4),
                 afk: false,
             },
         ];
         let values = collapse_records(None, records.clone());
 
         assert_eq!(values.len(), 2);
+
         assert_eq!(
-            values,
-            vec![
-                records[0].clone().into(),
-                UsageIntervalEntity::from(records[1].clone())
-                    .with_start(records[1].moment)
-                    .with_duration(Duration::seconds(2))
-            ]
+            values[0],
+            UsageIntervalEntity::from(records[0].clone())
+                .with_start(records[0].moment)
+                .with_duration(Duration::seconds(0))
+        );
+        assert_eq!(
+            values[1],
+            UsageIntervalEntity::from(records[1].clone())
+                .with_start(records[1].moment)
+                .with_duration(Duration::seconds(1))
         );
 
         Ok(())
