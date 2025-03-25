@@ -10,20 +10,19 @@ use now::DateTimeNow;
 use crate::{
     daemon::storage::{entities::UsageIntervalEntity, record_storage::RecordStorageImpl},
     utils::{
-        percentage::{duration_percentage, Percentage},
+        percentage::{Percentage, duration_percentage},
         time::next_day_start,
     },
 };
 
 use super::{
-    create_application_default_path,
+    Args, create_application_default_path,
     output::{
         self,
         analysis::{analyze_processes, analyze_windows},
         extract_between,
-        sliding_grouping::{sliding_interval_grouping, SlidingInterval, TimeOption},
+        sliding_grouping::{SlidingInterval, TimeOption, sliding_interval_grouping},
     },
-    Args,
 };
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -126,6 +125,7 @@ pub async fn process_timeline_command(
         interval,
         start,
         end,
+        show_time,
     } = match parse_values(start_date, end_date, date_style, interval, treat_as_days) {
         Ok(value) => value,
         Err(value) => return Err(value),
@@ -142,9 +142,9 @@ pub async fn process_timeline_command(
     );
 
     if use_processes {
-        print_processes_grouping(interval, min_percentage, afk, results).await?;
+        print_processes_grouping(interval, min_percentage, afk, show_time, results).await?;
     } else {
-        print_window_grouping(interval, min_percentage, afk, results).await?;
+        print_window_grouping(interval, min_percentage, afk, show_time, results).await?;
     }
     Ok(())
 }
@@ -153,6 +153,7 @@ struct ParamParseResult {
     interval: SlidingInterval,
     start: DateTime<Local>,
     end: DateTime<Local>,
+    show_time: bool,
 }
 
 /// Provides value parsing for timeline command. Also provides sensible defaults for start, end,
@@ -168,7 +169,10 @@ fn parse_values(
         return Err(Args::command()
             .error(
                 clap::error::ErrorKind::ValueValidation,
-                format!("Can't create an interval using {} and {}", interval.duration, interval.option),
+                format!(
+                    "Can't create an interval using {} and {}",
+                    interval.duration, interval.option
+                ),
             )
             .into());
     };
@@ -182,7 +186,7 @@ fn parse_values(
                     clap::error::ErrorKind::ValueValidation,
                     format!("Failed to valiate start date {e}"),
                 )
-                .into())
+                .into());
         }
         None => Local::now() - interval.as_duration() * DEFAULT_PRINTED_INTERVALS,
     };
@@ -194,7 +198,7 @@ fn parse_values(
                     clap::error::ErrorKind::ValueValidation,
                     format!("Failed to valiate end date {e}"),
                 )
-                .into())
+                .into());
         }
         None => Local::now(),
     };
@@ -202,17 +206,25 @@ fn parse_values(
         start = start.beginning_of_day();
         end = next_day_start(end);
     }
+
+    let show_time = *interval.time() > TimeOption::Days;
+
     Ok(ParamParseResult {
         interval,
         start,
         end,
+        show_time,
     })
 }
+
+// Realistically print_processes_grouping and print_window_grouping can be combined, however this
+// will require abstractions for just 80 lines of code.
 
 async fn print_processes_grouping(
     interval: SlidingInterval,
     min_percentage: Percentage,
     afk: bool,
+    show_time: bool,
     results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
 ) -> Result<()> {
     let intervals = sliding_interval_grouping::<_, Local>(results, interval, |v| {
@@ -226,11 +238,13 @@ async fn print_processes_grouping(
 
         let time = time.with_timezone(&Local);
 
+        let time_format = if show_time { "%x %H:%M:%S" } else { "%x" };
+
         if !analyzed.is_empty() {
             for entry in analyzed {
                 println!(
                     "{}\t{}%\t{}\t{}",
-                    time.format("%x %H:%M:%S"),
+                    time.format(time_format),
                     *duration_percentage(entry.duration, computer_on_duration) as i32,
                     format_duration(entry.duration),
                     clean_process_name(&entry.process_name)
@@ -246,6 +260,7 @@ async fn print_window_grouping(
     interval: SlidingInterval,
     min_percentage: Percentage,
     afk: bool,
+    show_time: bool,
     results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
 ) -> Result<()> {
     let intervals = sliding_interval_grouping::<_, Local>(results, interval, |v| {
@@ -259,11 +274,13 @@ async fn print_window_grouping(
 
         let time = time.with_timezone(&Local);
 
+        let time_format = if show_time { "%x %H:%M:%S" } else { "%x" };
+
         if !analyzed.is_empty() {
             for entry in analyzed {
                 println!(
                     "{}\t{}%\t{}\t{}\t{}",
-                    time.format("%x %H:%M:%S"),
+                    time.format(time_format),
                     *duration_percentage(entry.duration, computer_on_duration) as i32,
                     format_duration(entry.duration),
                     clean_process_name(&entry.process_name),
