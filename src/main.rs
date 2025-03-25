@@ -1,14 +1,14 @@
+
+
 use anyhow::Result;
 use tracing::error;
 use whatawhat::cli::run_cli;
 
 
-#[tokio::main]
-async fn main() -> Result<()> {
 
-    run_cli().await.inspect_err(|e| {
+fn main() -> Result<()> {
+    run_cli(std::env::args_os()).inspect_err(|e| {
         error!("Error running cli {e:?}");
     })?;
     Ok(())
 }
-

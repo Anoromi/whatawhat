@@ -1,63 +1,59 @@
-use std::{env, path::Path, process::Stdio};
+use std::{
+    env,
+    path::Path,
+    process::Command,
+};
 
-use anyhow::Result;
-use sysinfo::{get_current_pid, Signal, System};
+use anyhow::{anyhow, Result};
+use sysinfo::{Signal, System, get_current_pid};
+use tracing::error;
+
+use crate::cli::daemon_path::to_daemon_path;
 
 
-pub fn kill_previous_servers(name: &Path) {
-    let system = System::new_all();
+/// Returns all the running processes that aren't this process. Realistically there should only one
+/// element, but to account for errors it returns an iterator
+pub fn find_servers<'a>(
+    system: &'a System,
+    name: &'a Path,
+) -> impl Iterator<Item = (&'a sysinfo::Pid, &'a sysinfo::Process)> {
     let current_id = get_current_pid().unwrap();
-    for (pid, process) in system.processes().iter() {
-        if *pid == current_id {
-            continue;
+    system.processes().iter().filter(move |(pid, process)| {
+        if **pid == current_id {
+            return false;
         }
         if matches!(process.parent(), Some(p) if p == current_id) {
-            continue;
+            return false;
         }
-
-        if process
-            .exe()
-            .filter(|v| v.exists())
-            .filter(|v| name == *v)
-            .is_some()
-        {
-            // This will forcefully terminate the process on Windows. Anything better will require a
-            // lot more work.
-            if process.kill_with(Signal::Term).is_none() {
-                process.kill();
-            }
-            process.wait();
-        }
-    }
+        process.exe().filter(|v| name == *v).is_some()
+    })
 }
 
-/// Intended for shutting down previous server and starting new one. Currently for simplicity sake
+pub fn kill_previous_daemons(name: &Path) -> Result<()> {
+    let system = System::new_all();
+    for (pid, process) in find_servers(&system, name) {
+        println!("Killing process {pid}");
+        if process.kill_with(Signal::Term).is_none() {
+            // Windows doesn't support Signals, so forced termination is the only simple option.
+            if !process.kill() {
+                return Err(anyhow!("Failed killing process {pid}"));
+            }
+        }
+        process.wait();
+    }
+    Ok(())
+}
+
+/// Intended for shutting down previous daemon and starting new one. Currently for simplicity sake
 /// it operates using a detached process. This is not great but it's not as hard to configure.
-pub fn restart_server() -> Result<()> {
+pub fn restart_daemon() -> Result<()> {
     // The program use executable passed into the process. It's not the best option but it will do
     // the job in most cases.
-    let process_name = env::current_exe().expect("Can't operate without an executable");
-    kill_previous_servers(&process_name);
-    let mut command = std::process::Command::new(process_name);
-    command.args(["serve"]);
+    let daemon_name =
+        to_daemon_path(env::current_exe().expect("Can't operate without an executable"));
+    kill_previous_daemons(&daemon_name).inspect_err(|e| error!("Failed killing daemons {e}"))?;
 
-    #[cfg(feature = "win")]
-    {
-        use std::os::windows::process::CommandExt;
-        use windows::Win32::System::Threading::DETACHED_PROCESS;
-        command.creation_flags(DETACHED_PROCESS.0);
-    }
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        command.process_group(0);
-        command.stdin(Stdio::null());
-        command.stdout(Stdio::null());
-    }
-
-    println!("Spawning");
-    #[allow(clippy::zombie_processes)]
-    let _ = command.spawn()?;
-    println!("Success");
+    let mut v = Command::new(daemon_name).spawn().inspect_err(|e| error!("Failed creating a daemon {e}"))?;
+    v.wait()?;
     Ok(())
 }

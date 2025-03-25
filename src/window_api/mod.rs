@@ -34,7 +34,7 @@ pub trait WindowManager {
     fn get_idle_time(&mut self) -> Result<u32>;
 }
 
-// Serves as a cross-compatible implementation.
+/// Serves as a cross-compatible WindowManager implementation.
 pub struct GenericWindowManager {
     inner: Box<dyn WindowManager>,
 }

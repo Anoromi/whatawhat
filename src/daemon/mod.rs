@@ -17,6 +17,7 @@ pub mod collection;
 pub mod processing;
 pub mod storage;
 pub mod update;
+pub mod args;
 
 const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(1);
 

@@ -1,11 +1,11 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use sysinfo::Pid;
-use tracing::instrument;
+use tracing::{error, instrument};
 use xcb::{
     Connection,
     screensaver::{QueryInfo, QueryInfoReply},
     x::{
-        self, ATOM_ANY, Atom, Drawable, GetProperty, GrabServer, InternAtom, UngrabServer, Window,
+        self, ATOM_ANY, Atom, Drawable, GetProperty, InternAtom, Window,
     },
 };
 
@@ -89,35 +89,25 @@ pub fn get_name(conn: &Connection, window: Window, wm_name_atom: Atom) -> Result
     Ok(title)
 }
 
-pub struct LinuxWindowManager {
+struct WindowData {
     connection: Connection,
-    preferred_screen: i32,
+    preferred_screen: usize,
     active_window_atom: Atom,
     window_name_atom: Atom,
     pid_atom: Atom,
 }
 
-impl LinuxWindowManager {
-    pub fn new() -> Result<Self> {
-        let (connection, preferred_screen) = xcb::Connection::connect(None)?;
-        let active_window_atom = get_active_window_atom(&connection)?;
-        let name_atom = get_net_wm_name_atom(&connection)?;
-        let pid_atom = get_pid_atom(&connection)?;
-        Ok(Self {
-            connection,
-            preferred_screen,
-            active_window_atom,
-            window_name_atom: name_atom,
-            pid_atom,
-        })
-    }
-
+impl WindowData {
     #[instrument(skip(self))]
     fn get_active_inner(&self) -> Result<ActiveWindowData> {
         let setup = self.connection.get_setup();
 
         // Currently the application only supports 1 x11 screen.
-        let default_window = setup.roots().nth(self.preferred_screen.max(0) as usize).unwrap().root();
+        let default_window = setup
+            .roots()
+            .nth(self.preferred_screen)
+            .unwrap()
+            .root();
 
         let active_window =
             get_active_window(&self.connection, &default_window, self.active_window_atom)?;
@@ -131,30 +121,82 @@ impl LinuxWindowManager {
     }
 }
 
+pub struct LinuxWindowManager {
+    data: Option<WindowData>,
+}
+
+impl LinuxWindowManager {
+    pub fn new() -> Result<Self> {
+        Ok(Self { data: None })
+    }
+
+    fn try_reload_manager(&mut self) -> Result<WindowData> {
+        let (connection, preferred_screen) = xcb::Connection::connect(None)
+            .inspect_err(|e| error!("Failed creating connection {e:?}"))?;
+        if preferred_screen < 0 {
+            return Err(anyhow!(
+                "Preferred screen is less than 0 {preferred_screen}"
+            ));
+        }
+        let preferred_screen = preferred_screen as usize;
+        let active_window_atom = get_active_window_atom(&connection)
+            .inspect_err(|e| error!("Failed getting active window atom {e:?}"))?;
+        let name_atom = get_net_wm_name_atom(&connection)
+            .inspect_err(|e| error!("Failed getting wm name atom {e:?}"))?;
+        let pid_atom =
+            get_pid_atom(&connection).inspect_err(|e| error!("Failed getting pid of an atom {e:?}"))?;
+        Ok(WindowData {
+            connection,
+            preferred_screen,
+            active_window_atom,
+            window_name_atom: name_atom,
+            pid_atom,
+        })
+    }
+
+    fn try_get_data(&mut self) -> Result<WindowData> {
+        match self
+            .data
+            .take()
+            .filter(|v| v.connection.has_error().is_ok())
+        {
+            Some(data) => Ok(data),
+            None => match self.try_reload_manager() {
+                Ok(data) => Ok(data),
+                Err(e) => {
+                    error!("Failed to get xcb connection {e:?}");
+                    Err(e)
+                }
+            },
+        }
+    }
+}
+
 impl WindowManager for LinuxWindowManager {
     #[instrument(skip(self))]
     fn get_active_window_data(&mut self) -> Result<ActiveWindowData> {
-        assert!(self.preferred_screen >= 0);
-
-        let _ = self.connection.send_request(&GrabServer {});
-
-        let result = self.get_active_inner();
-        let _ = self.connection.send_request(&UngrabServer {});
+        let data = self
+            .try_get_data()
+            .inspect_err(|e| error!("Failed getting connection {e:?}"))?;
+        let result = data.get_active_inner();
+        self.data = Some(data);
         result
     }
 
     #[instrument(skip(self))]
     fn get_idle_time(&mut self) -> Result<u32> {
-        let w = self.connection.get_setup();
-        let wnd = w
-            .roots()
-            .nth(self.preferred_screen as usize)
-            .unwrap()
-            .root();
-        let idle = self.connection.send_request(&QueryInfo {
+        let data = self
+            .try_get_data()
+            .inspect_err(|e| error!("Failed getting connection {e:?}"))?;
+        let w = data.connection.get_setup();
+        let wnd = w.roots().nth(data.preferred_screen).unwrap().root();
+        let idle = data.connection.send_request(&QueryInfo {
             drawable: Drawable::Window(wnd),
         });
-        let reply: QueryInfoReply = self.connection.wait_for_reply(idle)?;
+        let reply: QueryInfoReply = data
+            .connection
+            .wait_for_reply(idle)
+            .inspect_err(|e| error!("Failed getting idle {e}"))?;
         Ok(reply.ms_since_user_input())
     }
 }

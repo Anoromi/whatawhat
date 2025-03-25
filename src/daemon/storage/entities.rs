@@ -61,8 +61,8 @@ impl UsageIntervalEntity {
         }
     }
 
-    // Returns usage only in the specified interval. Because the usage might happen outside of the
-    // specified interval the result is optional.
+    /// Returns usage only in the specified interval. Because the usage might happen outside of the
+    /// specified interval the result is optional.
     pub fn clamp(
         self,
         from: DateTime<Utc>,
