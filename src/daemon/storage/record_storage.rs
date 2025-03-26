@@ -15,7 +15,7 @@ use tokio::{
         AsyncWriteExt, BufReader,
     },
 };
-use tracing::{debug, trace, warn};
+use tracing::{debug, warn};
 
 use crate::{fs::operations::seek_line_backwards, utils::time::date_to_record_name};
 
