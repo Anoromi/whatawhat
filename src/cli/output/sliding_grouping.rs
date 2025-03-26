@@ -1,4 +1,7 @@
-use std::{fmt::{Debug, Display}, pin::Pin};
+use std::{
+    fmt::{Debug, Display},
+    pin::Pin,
+};
 
 use anyhow::Result;
 use chrono::{DateTime, Duration, NaiveTime, TimeZone, Timelike, Utc};
@@ -74,7 +77,6 @@ impl SlidingInterval {
             TimeOption::Days => Duration::days(self.duration as i64),
         }
     }
-
 }
 
 /// Creates a start of a timeline that's easier to comprehend.
@@ -84,58 +86,54 @@ pub fn clean_time_start<Tz: TimeZone>(
     scale: &SlidingInterval,
 ) -> DateTime<Tz> {
     match scale.time() {
-        TimeOption::Weeks => {
-            rough_start.beginning_of_week()
-        },
-        TimeOption::Days => {
-            rough_start.beginning_of_day()
-        },
+        TimeOption::Weeks => rough_start.beginning_of_week(),
+        TimeOption::Days => rough_start.beginning_of_day(),
         TimeOption::Hours => {
-                let lower_bound = rough_start
-                    .with_hour(0)
-                    .unwrap()
-                    .with_minute(0)
-                    .unwrap()
-                    .with_second(0)
-                    .unwrap()
-                    .with_nanosecond(0)
-                    .unwrap();
+            let lower_bound = rough_start
+                .with_hour(0)
+                .unwrap()
+                .with_minute(0)
+                .unwrap()
+                .with_second(0)
+                .unwrap()
+                .with_nanosecond(0)
+                .unwrap();
 
-                let duration = rough_start.clone() - lower_bound.clone();
-                let remainder = duration.num_hours() as u32 % scale.duration();
-                lower_bound
-                    .clone()
-                    .with_hour(rough_start.clone().hour() - remainder)
-                    .unwrap()
-            }
+            let duration = rough_start.clone() - lower_bound.clone();
+            let remainder = duration.num_hours() as u32 % scale.duration();
+            lower_bound
+                .clone()
+                .with_hour(rough_start.clone().hour() - remainder)
+                .unwrap()
+        }
         TimeOption::Minutes => {
-                let lower_bound = rough_start
-                    .with_minute(0)
-                    .unwrap()
-                    .with_second(0)
-                    .unwrap()
-                    .with_nanosecond(0)
-                    .unwrap();
+            let lower_bound = rough_start
+                .with_minute(0)
+                .unwrap()
+                .with_second(0)
+                .unwrap()
+                .with_nanosecond(0)
+                .unwrap();
 
-                let duration = rough_start.clone() - lower_bound.clone();
-                let remainder = duration.num_minutes() as u32 % scale.duration();
-                lower_bound
-                    .with_minute(rough_start.minute() - remainder)
-                    .unwrap()
-            }
+            let duration = rough_start.clone() - lower_bound.clone();
+            let remainder = duration.num_minutes() as u32 % scale.duration();
+            lower_bound
+                .with_minute(rough_start.minute() - remainder)
+                .unwrap()
+        }
         TimeOption::Seconds => {
-                let lower_bound = rough_start
-                    .with_second(0)
-                    .unwrap()
-                    .with_nanosecond(0)
-                    .unwrap();
+            let lower_bound = rough_start
+                .with_second(0)
+                .unwrap()
+                .with_nanosecond(0)
+                .unwrap();
 
-                let duration = rough_start.clone() - lower_bound.clone();
-                let remainder = duration.num_seconds() as u32 % scale.duration();
-                lower_bound
-                    .with_second(rough_start.second() - remainder)
-                    .unwrap()
-            }
+            let duration = rough_start.clone() - lower_bound.clone();
+            let remainder = duration.num_seconds() as u32 % scale.duration();
+            lower_bound
+                .with_second(rough_start.second() - remainder)
+                .unwrap()
+        }
     }
 }
 
@@ -221,15 +219,7 @@ where
 {
     let mut collected: Vec<UsageIntervalEntity> = vec![];
 
-    let mut extract_next = async |backlog: &mut Option<UsageIntervalEntity>| -> Result<_> {
-        if let Some(v) = backlog.take() {
-            Ok(Some(v))
-        } else {
-            stream.next().await.transpose()
-        }
-    };
-
-    while let Some(usage_interval) = extract_next(&mut backlog).await? {
+    while let Some(usage_interval) = take_or_poll_ok(&mut backlog, stream).await? {
         if usage_interval.end() < start {
             continue;
         }
@@ -270,11 +260,23 @@ where
         })
     }
 }
+
+async fn take_or_poll_ok<T>(
+    value: &mut Option<T>,
+    stream: &mut Pin<&mut impl Stream<Item = Result<T>>>,
+) -> Result<Option<T>> {
+    if let Some(v) = value.take() {
+        Ok(Some(v))
+    } else {
+        stream.next().await.transpose()
+    }
+}
+
 #[cfg(test)]
 mod clean_time_tests {
     use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeZone, Utc};
 
-    use super::{clean_time_start, SlidingInterval};
+    use super::{SlidingInterval, clean_time_start};
 
     const TEST_DATE: NaiveDate = NaiveDate::from_ymd_opt(2024, 4, 5).unwrap();
 
@@ -373,7 +375,7 @@ mod sliding_groupnig_test {
     use tokio_stream::StreamExt;
 
     use crate::{
-        cli::output::sliding_grouping::{sliding_interval_grouping, SlidingInterval, TimeOption},
+        cli::output::sliding_grouping::{SlidingInterval, TimeOption, sliding_interval_grouping},
         daemon::storage::entities::UsageIntervalEntity,
         utils::logging::TEST_LOGGING,
     };

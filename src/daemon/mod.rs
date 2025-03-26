@@ -16,7 +16,7 @@ use crate::{
 pub mod collection;
 pub mod processing;
 pub mod storage;
-pub mod update;
+pub mod shutdown;
 pub mod args;
 
 const DEFAULT_COLLECTION_INTERVAL: Duration = Duration::from_secs(1);
@@ -36,7 +36,7 @@ pub async fn start_daemon(dir: PathBuf) -> Result<()> {
     let processor = create_processor(dir, receiver)?;
 
     let (_, collection_result, processing_result) = tokio::join!(
-        update::detect_shutdown(shutdown_token),
+        shutdown::detect_shutdown(shutdown_token),
         collector.run(),
         processor.run(),
     );

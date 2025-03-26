@@ -1,4 +1,4 @@
-use std::{io::Write, path::Path, sync::LazyLock};
+use std::{path::Path, sync::LazyLock};
 
 use anyhow::Result;
 use tracing::level_filters::LevelFilter;

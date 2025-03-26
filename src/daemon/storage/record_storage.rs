@@ -80,7 +80,7 @@ impl RecordStorageImpl {
     }
 
     async fn get_all_inner(&self, path: &Path) -> Result<Vec<UsageIntervalEntity>> {
-        let extract = async || -> Result<Vec<UsageIntervalEntity>, std::io::Error> {
+        async fn extract(path: &Path) -> std::result::Result<Vec<UsageIntervalEntity>, std::io::Error> {
             debug!("Extracting {path:?}");
             let file = File::open(path).await?;
             file.lock_shared()?;
@@ -103,9 +103,9 @@ impl RecordStorageImpl {
             lines.into_inner().into_inner().unlock_async().await?;
 
             Ok(intervals)
-        };
+        }
 
-        match extract().await {
+        match extract(path).await {
             Ok(s) => Ok(s),
             Err(e) => {
                 if e.kind() == ErrorKind::NotFound {

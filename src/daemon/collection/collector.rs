@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::Result;
 use tokio::{
     sync::mpsc,
-    time::{Instant, sleep},
+    time::Instant,
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error};

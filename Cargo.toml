@@ -4,9 +4,8 @@ version = "0.2.0"
 authors = ["Andrii Zahorulko"]
 description = "Application for monitoring user activity"
 license = "MIT OR Apache-2.0"
-edition = "2024"
+edition = "2021"
 default-run = "whatawhat"
-rust-version = "1.85"
 categories = ["command-line-utilities"]
 
 
