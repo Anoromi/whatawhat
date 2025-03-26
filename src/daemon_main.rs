@@ -72,7 +72,7 @@ fn run_service(command_args: Vec<String>) -> Result<()> {
 
 fn run(args: DaemonArgs) -> Result<()> {
     let app_dir = args.dir.map_or_else(create_application_default_path, Ok)?;
-    enable_logging(DAEMON_PREFIX, &app_dir, args.log, args.log_console).unwrap();
+    enable_logging(DAEMON_PREFIX, &app_dir.join("logs"), args.log, args.log_console).unwrap();
     single_thread_runtime()?.block_on(async move { start_daemon(app_dir).await })?;
     Ok(())
 }

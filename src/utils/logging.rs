@@ -13,7 +13,7 @@ pub const DAEMON_PREFIX : &str = "daemon";
 /// logging into stdout.
 pub fn enable_logging(
     prefix: &str,
-    application_data_path: &Path,
+    path: &Path,
     log_level: Option<LevelFilter>,
     show_std: bool,
 ) -> Result<()> {
@@ -25,7 +25,7 @@ pub fn enable_logging(
         .rotation(Rotation::HOURLY)
         .max_log_files(48)
         .filename_prefix(prefix)
-        .build(application_data_path.join("logs"))?;
+        .build(path)?;
 
 
     let stdout = std::io::stdout.with_filter(move |_| show_std);

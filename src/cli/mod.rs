@@ -65,7 +65,7 @@ pub fn run_cli(values: impl Iterator<Item = OsString>) -> Result<()> {
         None
     };
 
-    enable_logging(CLI_PREFIX, &app_dir, logging_level, args.log)?;
+    enable_logging(CLI_PREFIX, &app_dir.join("logs"), logging_level, args.log)?;
 
     match args.commands {
         Commands::Restart { .. } => {

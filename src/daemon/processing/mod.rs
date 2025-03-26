@@ -9,7 +9,8 @@ pub mod local_save;
 pub mod module;
 
 /// Represents collector of records. This module is responsible for receiving events and saving
-/// them using various means.
+/// them using various means. Processing module is only responsible for managing the lifecycle, and
+/// doesn't handele any data saving itself. Data saving is done through [EventProcessor].
 pub struct ProcessingModule<Processor> {
     receiver: Receiver<RecordEvent>,
     processor: Processor,
