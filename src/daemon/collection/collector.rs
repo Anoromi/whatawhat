@@ -3,14 +3,13 @@ use std::time::Duration;
 use anyhow::Result;
 use tokio::{
     sync::mpsc,
-    time::{sleep, Instant},
+    time::{Instant, sleep},
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error};
 
 use crate::{
-    daemon::storage::record_event::RecordEvent, utils::clock::Clock,
-    window_api::WindowManager,
+    daemon::storage::record_event::RecordEvent, utils::clock::Clock, window_api::WindowManager,
 };
 
 use super::afk::AfkEvaluator;
@@ -58,10 +57,9 @@ impl DataCollectionModule {
     }
 
     pub async fn run(mut self) -> Result<()> {
+        let mut collection_point = Instant::now();
         loop {
-            let execution_start = Instant::now();
-
-            let elapsed = execution_start.elapsed();
+            collection_point += self.collection_frequency;
 
             match self.collect_data() {
                 Ok(record) => {
@@ -72,11 +70,12 @@ impl DataCollectionModule {
                     error!("Encountered an error during collection {:?}", e)
                 }
             }
+
             tokio::select! {
                 _ = self.shutdown.cancelled() => {
                     return Ok(())
                 }
-                _ = sleep(self.collection_frequency - elapsed) => ()
+                _ = self.time_provider.sleep_until(collection_point) => ()
             }
         }
     }
