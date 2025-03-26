@@ -1,4 +1,4 @@
-use std::{path::Path, sync::LazyLock};
+use std::{io::Write, path::Path, sync::LazyLock};
 
 use anyhow::Result;
 use tracing::level_filters::LevelFilter;
@@ -8,6 +8,9 @@ use tracing_subscriber::fmt::{format::FmtSpan, writer::MakeWriterExt};
 pub const CLI_PREFIX : &str = "cli";
 pub const DAEMON_PREFIX : &str = "daemon";
 
+/// Logging for the application is done in 2 ways. First there's `logs` directory in
+/// application_data_path that's used to store logs in files for each hour. Second, user can enable
+/// logging into stdout.
 pub fn enable_logging(
     prefix: &str,
     application_data_path: &Path,
@@ -15,11 +18,15 @@ pub fn enable_logging(
     show_std: bool,
 ) -> Result<()> {
 
+    // HOURLY rotation is used because of how tracing_appender calls pruning. Tracing appender does
+    // not delete previous data immediately, only after it needs to change from 1 date to another.
+    // This means that for a DAILY rotation the user needs to hit 00:00 to trigger file removal.
     let appender = tracing_appender::rolling::Builder::new()
-        .rotation(Rotation::DAILY)
-        .max_log_files(5)
+        .rotation(Rotation::HOURLY)
+        .max_log_files(48)
         .filename_prefix(prefix)
         .build(application_data_path.join("logs"))?;
+
 
     let stdout = std::io::stdout.with_filter(move |_| show_std);
 
@@ -39,6 +46,7 @@ pub fn enable_logging(
     Ok(())
 }
 
+/// Logger used for testing
 pub static TEST_LOGGING: LazyLock<()> = LazyLock::new(|| {
     tracing_subscriber::fmt()
         .with_max_level(LevelFilter::TRACE)
