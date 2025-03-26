@@ -49,28 +49,28 @@ For details on how to run the deamon on boot refer to [Autostart](#autostart)
 
 Get application usage for this week.
 ```
-whatawhat.exe timeline -d 1 -o days --start "last monday"
+whatawhat timeline -d 1 -o days --start "last monday"
 ```
 
 View the timeline for last 8 hours.
 ```
-whatawhat.exe timeline -d 30 -o minutes --start "8 hours ago"
+whatawhat timeline -d 30 -o minutes --start "8 hours ago"
 ```
 
 **Whatawhat also works well with common cli utils like grep**
 
 View when you started and ended your day with head/tail
 ```
-whatawhat.exe timeline -d 1 -o minutes --start "yesterday" --end  "yesterday" --days | tail
+whatawhat timeline -d 1 -o minutes --start "yesterday" --end  "yesterday" --days | tail
 ```
 *or*
 ```
-whatawhat.exe timeline -d 1 -o minutes --start "yesterday" --end  "yesterday" --days | head
+whatawhat timeline -d 1 -o minutes --start "yesterday" --end  "yesterday" --days | head
 ```
 
 View what YouTube videos you've been watching with grep
 ```
-whatawhat.exe timeline -d 1 -o minutes --start "today" --days | grep YouTube
+whatawhat timeline -d 1 -o minutes --start "today" --days | grep YouTube
 ```
 
 ## Autostart
@@ -84,7 +84,7 @@ For Windows you can refer to [this](https://www.howtogeek.com/208224/how-to-add-
 
 On Linux it's best to use autostart utilities provided by Gnome, KDE Plasma, etc.:
  - Add a new process on startup.
- - Specify the full path to the daemon (Usually `/home/user/.cargo/bin/whatawhat-daemon.exe`).
+ - Specify the full path to the daemon (Usually `/home/username/.cargo/bin/whatawhat-daemon`).
  - The daemon will now autostart on boot.
 
 

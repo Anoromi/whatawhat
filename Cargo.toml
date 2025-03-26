@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 edition = "2024"
 default-run = "whatawhat"
 rust-version = "1.85"
-categories = ["cli", "daemon", "tools", "traking"]
+categories = ["command-line-utilities"]
 
 
 
