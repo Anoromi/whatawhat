@@ -1,10 +1,7 @@
 use std::time::Duration;
 
 use anyhow::Result;
-use tokio::{
-    sync::mpsc,
-    time::Instant,
-};
+use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error};
 
@@ -57,7 +54,7 @@ impl DataCollectionModule {
     }
 
     pub async fn run(mut self) -> Result<()> {
-        let mut collection_point = Instant::now();
+        let mut collection_point = self.time_provider.instant();
         loop {
             collection_point += self.collection_frequency;
 

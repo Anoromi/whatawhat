@@ -17,7 +17,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ActiveWindowData {
     /// Name of the window. For example 'bash in hello' or 'Document 1' or 'Vibing in YouTube -
     /// Chrome'
@@ -27,6 +27,7 @@ pub struct ActiveWindowData {
 }
 
 /// Intended to serve as a contract windows and linux systems must implement.
+#[cfg_attr(test, mockall::automock)]
 pub trait WindowManager {
     fn get_active_window_data(&mut self) -> Result<ActiveWindowData>;
 

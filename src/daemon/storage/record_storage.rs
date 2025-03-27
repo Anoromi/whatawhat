@@ -288,7 +288,7 @@ mod tests {
 
     use super::UsageIntervalRecordFile;
 
-    const START_DATE: NaiveDateTime =
+    const TEST_START_DATE: NaiveDateTime =
         NaiveDateTime::new(NaiveDate::from_ymd_opt(2018, 7, 4).unwrap(), NaiveTime::MIN);
 
     #[tokio::test]
@@ -300,7 +300,7 @@ mod tests {
             .append_inner(vec![UsageRecordEntity {
                 window_name: "initial".into(),
                 process_name: "initial".into(),
-                moment: Utc.from_utc_datetime(&START_DATE),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
             }])
             .await?;
@@ -309,7 +309,7 @@ mod tests {
             .append_inner(vec![UsageRecordEntity {
                 window_name: "window".into(),
                 process_name: "process".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(1),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(1),
                 afk: true,
             }])
             .await?;
@@ -318,7 +318,7 @@ mod tests {
             .append_inner(vec![UsageRecordEntity {
                 window_name: "third".into(),
                 process_name: "process".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(2),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(2),
                 afk: true,
             }])
             .await?;
@@ -327,7 +327,7 @@ mod tests {
             .append_inner(vec![UsageRecordEntity {
                 window_name: "third".into(),
                 process_name: "process".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(3),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(3),
                 afk: true,
             }])
             .await?;
@@ -387,18 +387,18 @@ mod tests {
     async fn test_record_storage_basic() -> Result<()> {
         let dir = tempdir()?;
         let storage = RecordStorageImpl::new(dir.path().to_owned())?;
-        let mut record_file = storage.create_or_append_record(START_DATE.date()).await?;
+        let mut record_file = storage.create_or_append_record(TEST_START_DATE.date()).await?;
         let records = [
             UsageRecordEntity {
                 window_name: "test".into(),
                 process_name: "test process".into(),
-                moment: Utc.from_utc_datetime(&START_DATE),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
                 process_name: "test process 2".into(),
-                moment: Utc.from_utc_datetime(&START_DATE),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
             },
         ];
@@ -408,7 +408,7 @@ mod tests {
 
         record_file.flush().await?;
 
-        let values = storage.get_data_for(START_DATE.into()).await?;
+        let values = storage.get_data_for(TEST_START_DATE.into()).await?;
 
         assert_eq!(
             values,
@@ -422,24 +422,24 @@ mod tests {
     async fn test_record_storage_appending() -> Result<()> {
         let dir = tempdir()?;
         let storage = RecordStorageImpl::new(dir.path().to_owned())?;
-        let mut record = storage.create_or_append_record(START_DATE.date()).await?;
+        let mut record = storage.create_or_append_record(TEST_START_DATE.date()).await?;
         let records = [
             UsageRecordEntity {
                 window_name: "test".into(),
                 process_name: "test process".into(),
-                moment: Utc.from_utc_datetime(&START_DATE),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
                 process_name: "test process 2".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(1),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(1),
                 afk: false,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
                 process_name: "test process 2".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(2),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(2),
                 afk: false,
             },
         ];
@@ -451,7 +451,7 @@ mod tests {
 
         record.flush().await?;
 
-        let stored = storage.get_data_for(START_DATE.into()).await?;
+        let stored = storage.get_data_for(TEST_START_DATE.into()).await?;
 
         let collapsed = collapse_records(None, records.clone());
 
@@ -466,19 +466,19 @@ mod tests {
             UsageRecordEntity {
                 window_name: "test".into(),
                 process_name: "test process".into(),
-                moment: Utc.from_utc_datetime(&START_DATE),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
             },
             UsageRecordEntity {
                 window_name: "test".into(),
                 process_name: "test process".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(1),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(1),
                 afk: false,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
                 process_name: "test process 2".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(5),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(5),
                 afk: false,
             },
         ];
@@ -504,7 +504,7 @@ mod tests {
         let interval = UsageIntervalEntity {
             window_name: "test".into(),
             process_name: "test process".into(),
-            start: Utc.from_utc_datetime(&START_DATE),
+            start: Utc.from_utc_datetime(&TEST_START_DATE),
             duration: Duration::seconds(10),
             afk: false,
         };
@@ -512,7 +512,7 @@ mod tests {
         let records = [UsageRecordEntity {
             window_name: "test".into(),
             process_name: "test process".into(),
-            moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(15),
+            moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(15),
             afk: false,
         }];
 
@@ -535,19 +535,19 @@ mod tests {
             UsageRecordEntity {
                 window_name: "previous".into(),
                 process_name: "previous process".into(),
-                moment: Utc.from_utc_datetime(&START_DATE),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
                 process_name: "test process 2".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(3),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(3),
                 afk: false,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
                 process_name: "test process 2".into(),
-                moment: Utc.from_utc_datetime(&START_DATE) + Duration::seconds(4),
+                moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(4),
                 afk: false,
             },
         ];
