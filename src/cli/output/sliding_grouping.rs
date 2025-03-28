@@ -137,7 +137,9 @@ pub fn clean_time_start<Tz: TimeZone>(
     }
 }
 
-#[instrument(skip(values, analyzer))]
+/// This function groups data based on intervals provided. The function deleates all of the
+/// analysis to the `analyzer`, it only groups data.
+/// Returns a vector of (time_start, analyzed data).
 pub async fn sliding_interval_grouping<T, Tz: TimeZone>(
     values: impl Stream<Item = Result<UsageIntervalEntity>>,
     scale: SlidingInterval,
@@ -152,7 +154,9 @@ where
         return Ok(vec![]);
     };
 
-    // we only need timezone to get the point in time from which to run interval grouping.
+    // We only need timezone to get the point in time from which to run interval grouping.
+    // Utc is used for walking because local timezones can be subject to time shifts like daylight
+    // savings.
     let rough_start = DateTime::<Tz>::from(first.start);
     let mut collapse_start = clean_time_start(rough_start, &scale).to_utc();
 
@@ -162,10 +166,11 @@ where
     let move_time = |previous_end: DateTime<Utc>| {
         let start = previous_end;
         let mut end = start + duration;
-        // days are supposed to be self enclosed. There should be no overflow from one day to
-        // another.
         let local_start = DateTime::<Tz>::from(start);
         let local_end = DateTime::<Tz>::from(end);
+        // Days are supposed to be self enclosed. There should be no overflow from one day to
+        // another. This means that we need to trim `local_end` to the end of the day. Or in our
+        // case start of the next day.
         if local_start.date_naive() != local_end.date_naive() {
             end = local_end.with_time(NaiveTime::MIN).unwrap().to_utc()
         }
@@ -195,7 +200,7 @@ where
         trace!("Start end {collapse_start} {collapse_end}");
     }
 
-    return Ok(collected);
+    Ok(collected)
 }
 
 enum GroupResult<T> {

@@ -23,7 +23,7 @@ pub fn enable_logging(
     // This means that for a DAILY rotation the user needs to hit 00:00 to trigger file removal.
     let appender = tracing_appender::rolling::Builder::new()
         .rotation(Rotation::HOURLY)
-        .max_log_files(48)
+        .max_log_files(8)
         .filename_prefix(prefix)
         .build(path)?;
 

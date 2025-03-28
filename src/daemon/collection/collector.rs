@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::Result;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error};
+use tracing::{debug, error, info, info_span, Instrument};
 
 use crate::{
     daemon::storage::record_event::RecordEvent, utils::clock::Clock, window_api::WindowManager,
@@ -53,6 +53,7 @@ impl DataCollectionModule {
         })
     }
 
+    /// Executes the collector event loop.
     pub async fn run(mut self) -> Result<()> {
         let mut collection_point = self.time_provider.instant();
         loop {
@@ -60,8 +61,14 @@ impl DataCollectionModule {
 
             match self.collect_data() {
                 Ok(record) => {
+                    let span = info_span!("Processing collected data");
                     debug!("Sending message {:?}", record);
-                    self.next.send(record).await?;
+                    self.next
+                        .send(record)
+                        .instrument(span)
+                        .await
+                        .inspect_err(|e| error!("Unexpected error during sending {e:?}"))?;
+                    info!("Successfully sent message")
                 }
                 Err(e) => {
                     error!("Encountered an error during collection {:?}", e)
@@ -69,6 +76,8 @@ impl DataCollectionModule {
             }
 
             tokio::select! {
+                // Cancelation means we stop execution of the event loop. Which means we also drop
+                // the sender channel and consequently stop processing module.
                 _ = self.shutdown.cancelled() => {
                     return Ok(())
                 }

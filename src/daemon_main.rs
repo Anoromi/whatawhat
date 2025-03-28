@@ -1,6 +1,6 @@
 // This runs daemon on windows without creating a console. Disable during development to see
 // stdout.
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 
 use std::
     env::args

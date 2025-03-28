@@ -109,6 +109,8 @@ pub struct PrintInterval {
 
 const DEFAULT_PRINTED_INTERVALS: i32 = 10;
 
+/// Command to process `timeline` command. Timeline command is intended to provide information
+/// about user activity from `start_date` to `end_date`.
 pub async fn process_timeline_command(
     TimelineCommand {
         start_date,
@@ -133,6 +135,7 @@ pub async fn process_timeline_command(
 
     let application = RecordStorageImpl::new(create_application_default_path()?.join("records"))?;
 
+    // We create a stream representing timeline between dates.
     let results = extract_between(
         application,
         output::ExtractConfig {
@@ -156,7 +159,7 @@ struct ParamParseResult {
     show_time: bool,
 }
 
-/// Provides value parsing for timeline command. Also provides sensible defaults for start, end,
+/// Also provides sensible defaults for `timeline` command.
 fn parse_values(
     start_date: Option<String>,
     end_date: Option<String>,

@@ -21,13 +21,15 @@ impl ExtractConfig {
     }
 }
 
+/// Extracts [UsageIntervalEntity] between 2 dates. To do it in an efficient manner streams are
+/// used.
 pub fn extract_between(
     storage: impl RecordStorage,
-    print_config: ExtractConfig,
+    config: ExtractConfig,
 ) -> impl Stream<Item = Result<UsageIntervalEntity>> {
     let storage = Arc::new(storage);
-    let start = print_config.start;
-    let end = print_config.end;
+    let start = config.start;
+    let end = config.end;
 
 
     let date_iteration = date_range(start.date_naive(), end.date_naive());
@@ -37,7 +39,7 @@ pub fn extract_between(
             let storage = storage.clone();
             async move { (day, storage.get_data_for(day).await) }
         })
-        .buffered(8);
+        .buffered(4);
 
     let result = files
         .flat_map(|(day, data)| match data {
@@ -47,11 +49,12 @@ pub fn extract_between(
                 stream::once(future::ready(Err(e))).boxed()
             }
         })
-        .filter_map(move |v| future::ready(v.map(|v| print_config.filter(v)).transpose()));
+        .filter_map(move |v| future::ready(v.map(|v| config.filter(v)).transpose()));
 
     result
 }
 
+/// Returns a stream of dates between start (inclusive) and end (inclusive).
 fn date_range(start: NaiveDate, end: NaiveDate) -> impl Stream<Item = NaiveDate> {
     stream::unfold(
         (start, end),
