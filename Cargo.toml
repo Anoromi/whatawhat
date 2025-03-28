@@ -1,6 +1,6 @@
 [package]
 name = "whatawhat"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Andrii Zahorulko"]
 description = "Application for monitoring user activity"
 license = "MIT OR Apache-2.0"
