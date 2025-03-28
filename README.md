@@ -1,6 +1,8 @@
 # Whatawhat
 A tool for monitoring activity on the computer throughout the day.
 
+![Whatawhat demo](assets/whatawhat-demo.gif)
+
 - [Why would I want this?](#why-would-i-want-this)
 - [Introduction](#introducing-whatawhat)
 - [Installation](#installation)
@@ -16,6 +18,7 @@ A tool for monitoring activity on the computer throughout the day.
 - Because it's hard to remember what you've been doing 3 hours ago, let alone 1 week ago.
 - Because having no idea where your time goes will worsen your self-esteem.
 - Because knowing how much you spend on games might help you cope with addictions.
+
 
 
 ## Introducing Whatawhat
@@ -50,7 +53,7 @@ cargo install -F x11 whatawhat
 ```
 
 ## Usage
-When you're first starting out it's recommended to run whatawhat init. This will start the daemon for the current session.
+When you're first starting out it's recommended to run `whatawhat restart`. This will start the daemon for the current session.
 
 Now you can use the `whatawhat timeline` to get different data about your activity.
 
