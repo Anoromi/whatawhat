@@ -1,6 +1,6 @@
 [package]
 name = "whatawhat"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Andrii Zahorulko"]
 description = "Application for monitoring user activity"
 license = "MIT OR Apache-2.0"
@@ -8,6 +8,7 @@ edition = "2021"
 default-run = "whatawhat"
 categories = ["command-line-utilities"]
 rust-version = "1.80.1"
+repository = "https://github.com/Anoromi/whatawhat"
 
 
 
