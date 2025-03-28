@@ -243,8 +243,6 @@ async fn print_processes_grouping(
 
         let time_format = if show_time { "%x %H:%M:%S" } else { "%x" };
 
-        let process_style = ansi_term::Style::new().bold().on(ansi_term::Color::Red);
-
         let process_style = ansi_term::Style::new().italic();
 
         if !analyzed.is_empty() {
