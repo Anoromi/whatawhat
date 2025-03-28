@@ -1,7 +1,7 @@
 # Whatawhat
 A tool for monitoring activity on the computer throughout the day.
 
-![Whatawhat demo](assets/whatawhat-demo.gif)
+https://github.com/user-attachments/assets/d0bbfadb-eacb-4889-91ba-b97ed6b63646
 
 - [Why would I want this?](#why-would-i-want-this)
 - [Introduction](#introducing-whatawhat)
@@ -11,7 +11,7 @@ A tool for monitoring activity on the computer throughout the day.
 - [Usage](#usage)
 - [Examples](#examples)
 - [Autostart](#autostart)
-- [Notes](#installation)
+- [Notes](#notes)
 - [Future](#future)
 
 ## Why would I want this?
