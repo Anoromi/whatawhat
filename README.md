@@ -117,3 +117,4 @@ On Linux it's best to use autostart utilities provided by Gnome, KDE Plasma, etc
 - **Add configuration files**. Things like date formatting, collection interval should probably be modifiable. Also, defaults for `whatawhat timeline` should be configurable.
 - **Colors**. Colors can be extracted from icons for applications and will make it easier to distinguish between items.
 - **More tests**. The application lacks in integration tests and units tests for some components.
+
