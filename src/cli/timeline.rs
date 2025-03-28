@@ -10,7 +10,7 @@ use now::DateTimeNow;
 use crate::{
     daemon::storage::{entities::UsageIntervalEntity, record_storage::RecordStorageImpl},
     utils::{
-        percentage::{Percentage, duration_percentage},
+        percentage::{duration_percentage, Percentage, WholePercentage},
         time::next_day_start,
     },
 };
@@ -243,14 +243,19 @@ async fn print_processes_grouping(
 
         let time_format = if show_time { "%x %H:%M:%S" } else { "%x" };
 
+        let process_style = ansi_term::Style::new().bold().on(ansi_term::Color::Red);
+
+        let process_style = ansi_term::Style::new().italic();
+
         if !analyzed.is_empty() {
             for entry in analyzed {
+                let percentage = WholePercentage::from(duration_percentage(entry.duration, computer_on_duration));
                 println!(
-                    "{}\t{}%\t{}\t{}",
+                    "{}  {:4} {:10} {}",
                     time.format(time_format),
-                    *duration_percentage(entry.duration, computer_on_duration) as i32,
+                    percentage.to_string(),
                     format_duration(entry.duration),
-                    clean_process_name(&entry.process_name)
+                    process_style.paint(clean_process_name(&entry.process_name)),
                 );
             }
             println!();
@@ -279,15 +284,19 @@ async fn print_window_grouping(
 
         let time_format = if show_time { "%x %H:%M:%S" } else { "%x" };
 
+        let process_style = ansi_term::Style::new().italic();
+        let window_style = ansi_term::Style::new().underline();
+
         if !analyzed.is_empty() {
             for entry in analyzed {
+                let percentage = WholePercentage::from(duration_percentage(entry.duration, computer_on_duration));
                 println!(
-                    "{}\t{}%\t{}\t{}\t{}",
+                    "{}  {:4} {:10}  {} {}",
                     time.format(time_format),
-                    *duration_percentage(entry.duration, computer_on_duration) as i32,
+                    percentage.to_string(),
                     format_duration(entry.duration),
-                    clean_process_name(&entry.process_name),
-                    entry.window_name
+                    process_style.paint(clean_process_name(&entry.process_name)),
+                    window_style.paint(&*entry.window_name)
                 );
             }
             println!();

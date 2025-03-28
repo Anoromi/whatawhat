@@ -6,6 +6,9 @@ use chrono::Duration;
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Percentage(f64);
 
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct WholePercentage(i64);
+
 impl Display for Percentage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}%", self.0)
@@ -44,4 +47,16 @@ impl Deref for Percentage {
 pub fn duration_percentage(value: Duration, whole: Duration) -> Percentage {
     Percentage::new_opt(value.num_seconds() as f64 / whole.num_seconds() as f64 * 100.)
         .expect("Percentage should always be at least 0")
+}
+
+impl From<Percentage> for WholePercentage {
+    fn from(value: Percentage) -> Self {
+        Self(value.0 as i64)
+    }
+}
+
+impl Display for WholePercentage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}%", self.0)
+    }
 }
