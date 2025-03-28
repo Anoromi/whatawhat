@@ -318,7 +318,7 @@ fn format_duration(v: Duration) -> String {
     }
 }
 
-fn clean_process_name(value: &str) -> String {
+pub fn clean_process_name(value: &str) -> String {
     PathBuf::from(value)
         .file_name()
         .map(|v| v.to_string_lossy().to_string())

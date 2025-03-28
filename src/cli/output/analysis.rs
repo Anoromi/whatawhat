@@ -1,10 +1,9 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use chrono::Duration;
 
 use crate::{
-    daemon::storage::entities::UsageIntervalEntity,
-    utils::percentage::Percentage,
+    cli::timeline::clean_process_name, daemon::storage::entities::UsageIntervalEntity, utils::percentage::Percentage
 };
 
 #[derive(Debug)]
@@ -45,7 +44,7 @@ pub fn analyze_processes(
     min_percentage: Percentage,
     include_afk: bool,
 ) -> (Vec<ProcessUsage>, Duration) {
-    let mut map = HashMap::<Arc<str>, ProcessUsage>::new();
+    let mut map = HashMap::<String, ProcessUsage>::new();
 
     let mut inactive = ProcessUsage::new("Inactive".into());
 
@@ -57,7 +56,7 @@ pub fn analyze_processes(
             inactive.duration += v.duration
         } else {
             let analysis = map
-                .entry(v.process_name.clone())
+                .entry(clean_process_name(&v.process_name))
                 .or_insert_with(|| ProcessUsage::new(v.process_name));
             analysis.duration += v.duration;
         }
@@ -66,7 +65,7 @@ pub fn analyze_processes(
     let threshold = interval_sum * (*min_percentage as i32) / 100;
 
     if !inactive.duration.is_zero() {
-        map.insert(inactive.process_name.clone(), inactive);
+        map.insert(inactive.process_name.to_string(), inactive);
     }
 
     let mut usages = map
@@ -85,7 +84,7 @@ pub fn analyze_windows(
     min_percentage: Percentage,
     include_afk: bool,
 ) -> (Vec<WindowUsage>, Duration) {
-    let mut map = HashMap::<(Arc<str>, Arc<str>), WindowUsage>::new();
+    let mut map = HashMap::<(String, Arc<str>), WindowUsage>::new();
 
     let mut inactive = WindowUsage::new("Inactive".into(), "".into());
 
@@ -97,7 +96,7 @@ pub fn analyze_windows(
             inactive.duration += v.duration
         } else {
             let analysis = map
-                .entry((v.process_name.clone(), v.window_name.clone()))
+                .entry((clean_process_name(&v.process_name), v.window_name.clone()))
                 .or_insert_with(|| WindowUsage::new(v.process_name, v.window_name));
             analysis.duration += v.duration;
         }
@@ -106,7 +105,7 @@ pub fn analyze_windows(
     let threshold = interval_sum * (*min_percentage as i32) / 100;
 
     if !inactive.duration.is_zero() {
-        map.insert((inactive.process_name.clone(), inactive.window_name.clone()), inactive);
+        map.insert((inactive.process_name.to_string(), inactive.window_name.clone()), inactive);
     }
 
     let mut usages = map
