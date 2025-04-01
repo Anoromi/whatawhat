@@ -54,6 +54,7 @@ fn run_service(command_args: Vec<String>) -> Result<()> {
             let daemonize = Daemonize::new()
                 .stdout(daemonize::Stdio::devnull())
                 .stderr(daemonize::Stdio::devnull())
+                .stdin(daemonize::Stdio::devnull())
                 .execute();
             match daemonize {
                 daemonize::Outcome::Parent(parent) => {
