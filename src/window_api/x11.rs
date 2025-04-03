@@ -115,8 +115,8 @@ impl WindowData {
         let active_window =
             get_active_window(&self.connection, &default_window, self.active_window_atom)?;
         let window_name = get_name(&self.connection, active_window, self.window_name_atom)?;
-        let process = get_pid(&self.connection, active_window, self.pid_atom)?.unwrap();
-        let process_name = get_process_name(process)?.unwrap();
+        let process = get_pid(&self.connection, active_window, self.pid_atom)?.ok_or_else(|| anyhow!("Failed to get pid: pid is None"))?;
+        let process_name = get_process_name(process)?.ok_or_else(|| anyhow!("Failed to get process name: process name is None"))?;
         Ok(ActiveWindowData {
             window_title: window_name.into(),
             process_name: process_name.into(),
