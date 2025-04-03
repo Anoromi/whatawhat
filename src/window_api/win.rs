@@ -86,16 +86,16 @@ pub fn get_active() -> Result<ActiveWindowData> {
 }
 
 unsafe fn get_window_process_path(window_handle: HANDLE, text: &mut [u16]) -> Result<String> {
+    let mut length = text.len() as u32;
     unsafe {
-        let mut length = text.len() as u32;
-        QueryFullProcessImageNameW(
-            window_handle,
-            PROCESS_NAME_WIN32,
-            windows::core::PWSTR(text.as_mut_ptr()),
-            &mut length,
-        )?;
-        Ok(String::from_utf16_lossy(&text[..length as usize]))
+      QueryFullProcessImageNameW(
+          window_handle,
+          PROCESS_NAME_WIN32,
+          windows::core::PWSTR(text.as_mut_ptr()),
+          &mut length,
+      )?;
     }
+    Ok(String::from_utf16_lossy(&text[..length as usize]))
 }
 
 unsafe fn get_window_title(window_handle: HWND, text: &mut [u16]) -> String {
