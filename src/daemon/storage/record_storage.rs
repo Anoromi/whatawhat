@@ -245,8 +245,6 @@ fn collapse_records(
     }
 
     for record in usage_records {
-        dbg!(&intervals);
-        dbg!(intervals.last_mut().map(|v| v.end()), record.moment);
         match intervals.last_mut() {
             Some(interval)
                 if interval.window_name == record.window_name
