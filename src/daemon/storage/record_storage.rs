@@ -153,7 +153,7 @@ impl<F: AsyncSeek + AsyncRead + AsyncWrite + fs4::tokio::AsyncFileExt + Unpin> R
     for UsageIntervalRecordFile<F>
 {
     async fn append(&mut self, usage_record: Vec<UsageRecordEntity>) -> Result<()> {
-        self.append_inner(usage_record.clone()).await
+        self.append_inner(usage_record).await
     }
 
     fn get_date(&self) -> chrono::NaiveDate {
