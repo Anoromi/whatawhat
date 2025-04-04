@@ -60,7 +60,7 @@ impl<R: RecordStorage> EventProcessor for LocalSaver<R> {
         Ok(())
     }
 
-    async fn finalize(&mut self) -> anyhow::Result<()> {
+    async fn finalize(&mut self) -> Result<()> {
         if let Some(v) = self.current_handle.as_mut() {
             v.flush().await?;
         }
