@@ -42,12 +42,12 @@ pub fn get_active() -> Result<ActiveWindowData> {
         let err = unsafe { GetLastError() };
         let mut message_buffer = [0u16; 2048];
         let size = unsafe {
+          // Gets a message from windows about previous error in english
             FormatMessageW(
                 FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                 None,
                 err.0,
                 LANG_ENGLISH | (SUBLANG_ENGLISH_US << 10),
-                // 0x1033_0400,
                 PWSTR::from_raw(message_buffer.as_mut_ptr()),
                 2048,
                 None,
