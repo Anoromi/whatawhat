@@ -1,6 +1,81 @@
 [package]
-name = "process-detector"
-version = "0.1.0"
+name = "whatawhat"
+version = "0.2.3"
+authors = ["Andrii Zahorulko"]
+description = "Application for monitoring user activity"
+license = "MIT OR Apache-2.0"
 edition = "2021"
+default-run = "whatawhat"
+categories = ["command-line-utilities"]
+rust-version = "1.80.1"
+repository = "https://github.com/Anoromi/whatawhat"
+
+
 
 [dependencies]
+
+anyhow = { version = "1.0.95", features = ["backtrace"] }
+clap = { version = "4.5.24", features = ["derive", "string"] }
+
+fs4 = { version = "0.12.0", features = ["tokio"] }
+
+serde = { version = "1.0.217", features = ["derive", "rc", "std"] }
+serde_json = "1.0.135"
+
+chrono = { version = "0.4.39", features = ["serde"] }
+now = "0.1.3"
+chrono-english = "0.1.7"
+
+futures = "0.3.31"
+tokio = { version = "1", features = ["full", "test-util"] }
+tokio-stream = "0.1.17"
+tokio-util = "0.7.13"
+async-backtrace = "0.2.7"
+async-trait = "0.1.87"
+
+tracing = { version = "0.1.41", features = ["attributes"] }
+tracing-appender = "0.2.3"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+
+sysinfo = "0.33.1"
+
+cfg-if = "1.0.0"
+ansi_term = "0.12.1"
+
+[target.'cfg(unix)'.dependencies]
+daemonize = { version = "0.5.0"}
+
+[dependencies.xcb]
+version = "^1.5"
+features = ["screensaver"]
+optional = true
+
+[dependencies.windows]
+version = "0.58.0"
+features = [
+	"Win32_UI_WindowsAndMessaging",
+	"Win32_System_SystemInformation",
+	"Win32_System_Threading",
+	"Win32_UI_Input_KeyboardAndMouse",
+	"Win32_UI_WindowsAndMessaging",
+	"Win32_UI_Shell",
+	"Win32_System_Diagnostics_Debug",
+	"Win32_System_SystemServices"
+]
+optional = true
+
+[dev-dependencies]
+mockall = "0.13.1"
+tempfile = "3.17.1"
+
+[features]
+win = ["dep:windows"]
+x11 = ["dep:xcb"]
+
+[[bin]]
+name = "whatawhat-daemon"
+path = "src/daemon_main.rs"
+
+[[bin]]
+name = "whatawhat"
+path = "src/main.rs"
