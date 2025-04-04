@@ -230,7 +230,7 @@ where
         }
 
         trace!(
-            "{} {} {}",
+            "Sliding grouping with process {} from {} till {}",
             usage_interval.process_name,
             usage_interval.start,
             usage_interval.end()
