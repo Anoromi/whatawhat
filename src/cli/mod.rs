@@ -3,6 +3,7 @@ pub mod output;
 pub mod process;
 pub mod timeline;
 pub mod subprocess_window_collector;
+pub mod autostart;
 
 use std::{env, ffi::OsString, path::PathBuf};
 
@@ -12,6 +13,7 @@ use daemon_path::to_daemon_path;
 use process::{kill_previous_daemons, restart_daemon};
 use timeline::{TimelineCommand, app_timeline_command};
 use tracing::level_filters::LevelFilter;
+use autostart::configure_autostart;
 
 use crate::utils::{
         dir::create_application_default_path,
@@ -39,6 +41,8 @@ struct Args {
 enum Commands {
     #[command(about = "Starts a daemon for the application")]
     Restart {},
+    #[command(about = "Enable autostart of the daemon on system login (Windows/Linux)")]
+    Autostart {},
     #[command(about = "Display a timeline of user activity")]
     Timeline {
         #[command(flatten)]
@@ -71,6 +75,10 @@ pub fn run_cli(values: impl Iterator<Item = OsString>) -> Result<()> {
     match args.commands {
         Commands::Restart { .. } => {
             restart_daemon()?;
+            Ok(())
+        }
+        Commands::Autostart {} => {
+            configure_autostart()?;
             Ok(())
         }
         Commands::Stop {} => {

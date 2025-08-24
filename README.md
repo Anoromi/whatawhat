@@ -89,17 +89,15 @@ whatawhat timeline -d 1 -o minutes --start "today" --days | grep YouTube
 
 ## Autostart
 
-Whatawhat doesn't run startup by default. This needs to be configured yourself.
+You can enable autostart in one command:
 
-For Windows you can refer to [this](https://www.howtogeek.com/208224/how-to-add-a-program-to-startup-in-windows/):
- - Create a shortcut to whatawhat-daemon.exe.
- - Put the shortcut into the startup folder.
- - The daemon will now autostart on boot.
+```
+whatawhat autostart
+```
 
-On Linux it's best to use autostart utilities provided by Gnome, KDE Plasma, etc.:
- - Add a new process on startup.
- - Specify the full path to the daemon (Usually `/home/username/.cargo/bin/whatawhat-daemon`).
- - The daemon will now autostart on boot.
+- On **Windows**, this creates an entry under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` to start `whatawhat-daemon` on login.
+- On **Linux**, this creates a `~/.config/autostart/whatawhat-daemon.desktop` file pointing to the `whatawhat-daemon` binary.
+- macOS autostart is not implemented.
 
 ## Notes
 
