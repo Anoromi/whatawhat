@@ -5,6 +5,7 @@ use chrono::{DateTime, Duration, Local};
 use chrono_english::parse_date_string;
 use clap::{CommandFactory, Parser, ValueEnum};
 use futures::Stream;
+use futures::StreamExt;
 use now::DateTimeNow;
 
 use crate::{
@@ -19,7 +20,7 @@ use super::{
     Args, create_application_default_path,
     output::{
         self,
-        analysis::{analyze_processes, analyze_windows},
+        analysis::{analyze_apps, analyze_windows},
         extract_between,
         sliding_grouping::{SlidingInterval, TimeOption, sliding_interval_grouping},
     },
@@ -84,6 +85,8 @@ pub struct TimelineCommand {
         help = "Include time afk. Person is considered afk after 2 minutes of idle time."
     )]
     afk: bool,
+    #[arg(short = 'b', long = "biggest", help = "Print only the biggest item for the entire range")]
+    only_biggest: bool,
 }
 
 #[derive(Parser, Debug)]
@@ -111,7 +114,7 @@ const DEFAULT_PRINTED_INTERVALS: i32 = 10;
 
 /// Command to process `timeline` command. Timeline command is intended to provide information
 /// about user activity from `start_date` to `end_date`.
-pub async fn process_timeline_command(
+pub async fn app_timeline_command(
     TimelineCommand {
         start_date,
         end_date,
@@ -121,6 +124,7 @@ pub async fn process_timeline_command(
         min_percentage,
         use_processes,
         afk,
+        only_biggest,
     }: TimelineCommand,
 ) -> Result<()> {
     let ParamParseResult {
@@ -143,6 +147,15 @@ pub async fn process_timeline_command(
             end: end.into(),
         },
     );
+
+    if only_biggest {
+        if use_processes {
+            print_biggest_process_grouping(start, min_percentage, afk, show_time, results).await?;
+        } else {
+            print_biggest_window_grouping(start, min_percentage, afk, show_time, results).await?;
+        }
+        return Ok(());
+    }
 
     if use_processes {
         print_processes_grouping(interval, min_percentage, afk, show_time, results).await?;
@@ -231,7 +244,7 @@ async fn print_processes_grouping(
     results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
 ) -> Result<()> {
     let intervals = sliding_interval_grouping::<_, Local>(results, interval, |v| {
-        analyze_processes(v, min_percentage, afk)
+        analyze_apps(v, min_percentage, afk)
     })
     .await?;
     for (time, value) in intervals {
@@ -253,7 +266,7 @@ async fn print_processes_grouping(
                     time.format(time_format),
                     percentage.to_string(),
                     format_duration(entry.duration),
-                    process_style.paint(clean_process_name(&entry.process_name)),
+                    process_style.paint(clean_process_name(&entry.app_identifier)),
                 );
             }
             println!();
@@ -293,12 +306,72 @@ async fn print_window_grouping(
                     time.format(time_format),
                     percentage.to_string(),
                     format_duration(entry.duration),
-                    process_style.paint(clean_process_name(&entry.process_name)),
+                    process_style.paint(clean_process_name(&entry.app_identifier)),
                     window_style.paint(&*entry.window_name)
                 );
             }
             println!();
         }
+    }
+    Ok(())
+}
+
+async fn print_biggest_process_grouping(
+    start_time: DateTime<Local>,
+    min_percentage: Percentage,
+    afk: bool,
+    show_time: bool,
+    results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
+) -> Result<()> {
+    let mut results = std::pin::pin!(results);
+    let mut collected: Vec<UsageIntervalEntity> = vec![];
+    while let Some(v) = results.next().await {
+        collected.push(v?);
+    }
+    let (analyzed, computer_on_duration) = analyze_apps(collected, min_percentage, afk);
+    if let Some(entry) = analyzed.first() {
+        let time_format = if show_time { "%x %H:%M:%S" } else { "%x" };
+        let process_style = ansi_term::Style::new().italic();
+        let percentage = WholePercentage::from(duration_percentage(entry.duration, computer_on_duration));
+        println!(
+            "{}  {:4} {:10} {}",
+            start_time.format(time_format),
+            percentage.to_string(),
+            format_duration(entry.duration),
+            process_style.paint(clean_process_name(&entry.app_identifier)),
+        );
+        println!();
+    }
+    Ok(())
+}
+
+async fn print_biggest_window_grouping(
+    start_time: DateTime<Local>,
+    min_percentage: Percentage,
+    afk: bool,
+    show_time: bool,
+    results: impl Stream<Item = std::result::Result<UsageIntervalEntity, anyhow::Error>>,
+) -> Result<()> {
+    let mut results = std::pin::pin!(results);
+    let mut collected: Vec<UsageIntervalEntity> = vec![];
+    while let Some(v) = results.next().await {
+        collected.push(v?);
+    }
+    let (analyzed, computer_on_duration) = analyze_windows(collected, min_percentage, afk);
+    if let Some(entry) = analyzed.first() {
+        let time_format = if show_time { "%x %H:%M:%S" } else { "%x" };
+        let process_style = ansi_term::Style::new().italic();
+        let window_style = ansi_term::Style::new().underline();
+        let percentage = WholePercentage::from(duration_percentage(entry.duration, computer_on_duration));
+        println!(
+            "{}  {:4} {:10}  {} {}",
+            start_time.format(time_format),
+            percentage.to_string(),
+            format_duration(entry.duration),
+            process_style.paint(clean_process_name(&entry.app_identifier)),
+            window_style.paint(&*entry.window_name)
+        );
+        println!();
     }
     Ok(())
 }
@@ -319,6 +392,12 @@ fn format_duration(v: Duration) -> String {
 }
 
 pub fn clean_process_name(value: &str) -> String {
+    // We only need to clean the value if it's actually a process. If it's an app identifier
+    // we don't care. Also app identifier shouldn't have slashes in them so there probably shouldn't be
+    // a false positive. TODO: Can there be a false positive?
+    if !value.contains('\\') && !value.contains('/') {
+        return value.into();
+    }
     PathBuf::from(value)
         .file_name()
         .map(|v| v.to_string_lossy().to_string())

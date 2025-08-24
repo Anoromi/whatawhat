@@ -51,9 +51,11 @@ impl<R: RecordStorage> EventProcessor for LocalSaver<R> {
         active_file
             .append(vec![UsageRecordEntity {
                 window_name: message.window_name,
-                process_name: message.process_name,
+                process_path: message.process_name,
                 moment: message.timestamp,
                 afk: message.afk,
+                app_name: message.application_name,
+                app_identifier: message.app_identifier,
             }])
             .await?;
 

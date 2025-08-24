@@ -2,6 +2,7 @@ pub mod daemon_path;
 pub mod output;
 pub mod process;
 pub mod timeline;
+pub mod subprocess_window_collector;
 
 use std::{env, ffi::OsString, path::PathBuf};
 
@@ -9,7 +10,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use daemon_path::to_daemon_path;
 use process::{kill_previous_daemons, restart_daemon};
-use timeline::{TimelineCommand, process_timeline_command};
+use timeline::{TimelineCommand, app_timeline_command};
 use tracing::level_filters::LevelFilter;
 
 use crate::utils::{
@@ -78,7 +79,7 @@ pub fn run_cli(values: impl Iterator<Item = OsString>) -> Result<()> {
         }
         Commands::Timeline { command } => {
             multi_thread_runtime()?
-                .block_on(async move { process_timeline_command(command).await })?;
+                .block_on(async move { app_timeline_command(command).await })?;
             Ok(())
         }
     }

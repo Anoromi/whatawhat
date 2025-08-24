@@ -13,7 +13,11 @@ use std::sync::Arc;
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize, Clone)]
 pub struct UsageIntervalEntity {
     pub window_name: Arc<str>,
-    pub process_name: Arc<str>,
+    /// We used to only have processes, but wayland made things complicated. Oh well, time to learn migrations.
+    #[serde(alias = "process_name")]
+    pub process_path: Option<Arc<str>>,
+    pub app_identifier: Option<Arc<str>>,
+    pub app_name: Option<Arc<str>>,
     #[serde(with = "chrono::serde::ts_seconds")]
     pub start: DateTime<Utc>,
     #[serde(with = "duration_ser")]
@@ -45,14 +49,18 @@ impl UsageIntervalEntity {
         } else {
             let before = UsageIntervalEntity {
                 window_name: self.window_name.clone(),
-                process_name: self.process_name.clone(),
+                process_path: self.process_path.clone(),
+                app_identifier: self.app_identifier.clone(),
+                app_name: self.app_name.clone(),
                 start: self.start,
                 duration: split - self.start,
                 afk: self.afk,
             };
             let after = UsageIntervalEntity {
                 window_name: self.window_name,
-                process_name: self.process_name,
+                process_path: self.process_path,
+                app_identifier: self.app_identifier.clone(),
+                app_name: self.app_name.clone(),
                 start: split,
                 duration: end - split,
                 afk: self.afk,
@@ -63,12 +71,19 @@ impl UsageIntervalEntity {
 
     /// Returns usage only in the specified interval. Because the usage might happen outside of the
     /// specified interval the result is optional.
-    pub fn clamp(
-        self,
-        from: DateTime<Utc>,
-        to: DateTime<Utc>,
-    ) -> Option<UsageIntervalEntity> {
+    pub fn clamp(self, from: DateTime<Utc>, to: DateTime<Utc>) -> Option<UsageIntervalEntity> {
         self.split_by(from).1.and_then(|v| v.split_by(to).0)
+    }
+
+    pub fn readable_name<'a>(&'a self) -> &'a str {
+        if let Some(app_name) = self.app_name.as_ref() {
+            return &app_name;
+        } else if let Some(app_identifier) = self.app_identifier.as_ref() {
+            return &app_identifier;
+        } else if let Some(process_path) = self.process_path.as_ref() {
+            return &process_path;
+        }
+        return "{unknown app}";
     }
 
     pub fn with_duration(self, duration: Duration) -> Self {
@@ -105,7 +120,9 @@ mod duration_ser {
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Serialize, Deserialize, Clone)]
 pub struct UsageRecordEntity {
     pub window_name: Arc<str>,
-    pub process_name: Arc<str>,
+    pub process_path: Option<Arc<str>>,
+    pub app_identifier: Option<Arc<str>>,
+    pub app_name: Option<Arc<str>>,
     pub moment: DateTime<Utc>,
     pub afk: bool,
 }
@@ -114,17 +131,21 @@ impl From<UsageRecordEntity> for UsageIntervalEntity {
     fn from(
         UsageRecordEntity {
             window_name,
-            process_name,
+            process_path,
             moment,
             afk,
+            app_identifier,
+            app_name,
         }: UsageRecordEntity,
     ) -> Self {
         UsageIntervalEntity {
             window_name,
-            process_name,
             start: moment,
             duration: Duration::zero(),
             afk,
+            app_identifier,
+            app_name,
+            process_path,
         }
     }
 }

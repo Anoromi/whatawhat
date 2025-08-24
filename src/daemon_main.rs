@@ -9,7 +9,8 @@ use std::
 use anyhow::Result;
 use clap::Parser;
 use whatawhat::{
-    daemon::{args::DaemonArgs, start_daemon},
+    cli::subprocess_window_collector::run_collector,
+    daemon::{args::DaemonArgs, start_daemon_with_intervals},
     utils::{
         dir::create_application_default_path,
         logging::{DAEMON_PREFIX, enable_logging},
@@ -70,9 +71,40 @@ fn run_service(command_args: Vec<String>) -> Result<()> {
     run(args)
 }
 
+fn run_collection_subprocess(args: DaemonArgs) -> Result<()> {
+    let collection_interval = args.collect_interval
+        .map(|d| std::time::Duration::from_secs(d.num_seconds() as u64))
+        .unwrap_or(std::time::Duration::from_secs(1));
+    let idle_time = args.idle_time
+        .map(|d| std::time::Duration::from_secs(d.num_seconds() as u64))
+        .unwrap_or(std::time::Duration::from_secs(5 * 60));
+
+    // Run the collector that writes to stdout
+    run_collector(std::io::stdout(), collection_interval, idle_time)?;
+
+    Ok(())
+}
+
 fn run(args: DaemonArgs) -> Result<()> {
+    // If collect flag is set, run in collection subprocess mode
+    if args.collect {
+        run_collection_subprocess(args)?;
+        return Ok(());
+    }
+
     let app_dir = args.dir.map_or_else(create_application_default_path, Ok)?;
     enable_logging(DAEMON_PREFIX, &app_dir.join("logs"), args.log, args.log_console).unwrap();
-    single_thread_runtime()?.block_on(async move { start_daemon(app_dir).await })?;
+
+    // Convert chrono::Duration to std::time::Duration
+    let collection_interval = args.collect_interval
+        .map(|d| std::time::Duration::from_secs(d.num_seconds() as u64))
+        .unwrap_or(std::time::Duration::from_secs(1));
+    let idle_interval = args.idle_time
+        .map(|d| std::time::Duration::from_secs(d.num_seconds() as u64))
+        .unwrap_or(std::time::Duration::from_secs(5 * 60));
+
+    single_thread_runtime()?.block_on(async move {
+        start_daemon_with_intervals(app_dir, collection_interval, idle_interval).await
+    })?;
     Ok(())
 }

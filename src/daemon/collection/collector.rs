@@ -4,18 +4,14 @@ use anyhow::Result;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, info_span, Instrument};
+use whatawhat_lib::WindowManager;
 
-use crate::{
-    daemon::storage::record_event::RecordEvent, utils::clock::Clock, window_api::WindowManager,
-};
-
-use super::afk::AfkEvaluator;
+use crate::{daemon::storage::record_event::RecordEvent, utils::clock::Clock};
 
 pub struct DataCollectionModule {
     next: mpsc::Sender<RecordEvent>,
     producer: Box<dyn WindowManager>,
     shutdown: CancellationToken,
-    afk_evaluator: AfkEvaluator,
     collection_frequency: Duration,
     time_provider: Box<dyn Clock>,
 }
@@ -25,7 +21,6 @@ impl DataCollectionModule {
         next: mpsc::Sender<RecordEvent>,
         producer: Box<dyn WindowManager>,
         shutdown: CancellationToken,
-        afk_evaluator: AfkEvaluator,
         collection_frequency: Duration,
         time_provider: Box<dyn Clock>,
     ) -> Self {
@@ -33,23 +28,23 @@ impl DataCollectionModule {
             next,
             producer,
             collection_frequency,
-            afk_evaluator,
             time_provider,
             shutdown,
         }
     }
 
-    fn collect_data(&mut self) -> Result<RecordEvent> {
+    async fn collect_data(&mut self) -> Result<RecordEvent> {
         let window_data = self.producer.get_active_window_data()?;
-        let idle_ms = self.producer.get_idle_time()?;
-        let afk = self.afk_evaluator.is_afk(idle_ms);
+        let afk = self.producer.is_idle()?;
         let timestamp = self.time_provider.time();
 
         Ok(RecordEvent {
             window_name: window_data.window_title,
-            process_name: window_data.process_name,
+            process_name: window_data.process_path,
             afk,
             timestamp,
+            app_identifier: window_data.app_identifier,
+            application_name: window_data.app_name,
         })
     }
 
@@ -59,7 +54,7 @@ impl DataCollectionModule {
         loop {
             collection_point += self.collection_frequency;
 
-            match self.collect_data() {
+            match self.collect_data().await {
                 Ok(record) => {
                     let span = info_span!("Processing collected data");
                     debug!("Sending message {:?}", record);

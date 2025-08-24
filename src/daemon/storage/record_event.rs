@@ -11,7 +11,9 @@ pub struct RecordEvent {
     /// Chrome'
     pub window_name: Arc<str>,
     /// Full path to an executable. For example /home/etc/nvim
-    pub process_name: Arc<str>,
+    pub process_name: Option<Arc<str>>,
+    pub app_identifier: Option<Arc<str>>,
+    pub application_name: Option<Arc<str>>,
     pub afk: bool,
 }
 

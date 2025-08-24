@@ -231,7 +231,7 @@ where
 
         trace!(
             "Sliding grouping with process {} from {} till {}",
-            usage_interval.process_name,
+            usage_interval.readable_name(),
             usage_interval.start,
             usage_interval.end()
         );
@@ -281,7 +281,7 @@ async fn take_or_poll_ok<T>(
 mod clean_time_tests {
     use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Offset, TimeZone, Utc};
 
-    use super::{SlidingInterval, clean_time_start};
+    use super::{clean_time_start, SlidingInterval};
 
     const TEST_DATE: NaiveDate = NaiveDate::from_ymd_opt(2024, 4, 5).unwrap();
 
@@ -380,7 +380,7 @@ mod sliding_groupnig_test {
     use tokio_stream::StreamExt;
 
     use crate::{
-        cli::output::sliding_grouping::{SlidingInterval, TimeOption, sliding_interval_grouping},
+        cli::output::sliding_grouping::{sliding_interval_grouping, SlidingInterval, TimeOption},
         daemon::storage::entities::UsageIntervalEntity,
         utils::logging::TEST_LOGGING,
     };
@@ -395,17 +395,21 @@ mod sliding_groupnig_test {
 
         let entity_a = UsageIntervalEntity {
             window_name: "entity a".into(),
-            process_name: "process a".into(),
+            process_path: Some("process a".into()),
             start: Utc.from_utc_datetime(&TEST_DATE_TIME),
             duration: Duration::zero(),
             afk: false,
+            app_identifier: None,
+            app_name: None,
         };
         let entity_b = UsageIntervalEntity {
             window_name: "entity b".into(),
-            process_name: "process b".into(),
+            process_path: Some("process b".into()),
             start: Utc.from_utc_datetime(&TEST_DATE_TIME),
             duration: Duration::zero(),
             afk: false,
+            app_identifier: None,
+            app_name: None,
         };
         let mut values = vec![];
 

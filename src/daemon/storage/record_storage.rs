@@ -62,7 +62,7 @@ where
 
 pub trait RecordFileHandle {
     fn append(&mut self, usage_records: Vec<UsageRecordEntity>)
-    -> impl Future<Output = Result<()>>;
+        -> impl Future<Output = Result<()>>;
     fn get_date(&self) -> NaiveDate;
     fn flush(&mut self) -> impl Future<Output = Result<()>>;
 }
@@ -80,7 +80,9 @@ impl RecordStorageImpl {
     }
 
     async fn get_all_inner(&self, path: &Path) -> Result<Vec<UsageIntervalEntity>> {
-        async fn extract(path: &Path) -> std::result::Result<Vec<UsageIntervalEntity>, std::io::Error> {
+        async fn extract(
+            path: &Path,
+        ) -> std::result::Result<Vec<UsageIntervalEntity>, std::io::Error> {
             debug!("Extracting {path:?}");
             let file = File::open(path).await?;
             file.lock_shared()?;
@@ -248,7 +250,7 @@ fn collapse_records(
         match intervals.last_mut() {
             Some(interval)
                 if interval.window_name == record.window_name
-                    && interval.process_name == record.process_name
+                    && interval.process_path == record.process_path
                     && interval.afk == record.afk
                     && record.moment - interval.end() < MAX_MERGE_DURATION =>
             {
@@ -281,7 +283,7 @@ mod tests {
 
     use crate::daemon::storage::{
         entities::{UsageIntervalEntity, UsageRecordEntity},
-        record_storage::{RecordFileHandle, RecordStorage, RecordStorageImpl, collapse_records},
+        record_storage::{collapse_records, RecordFileHandle, RecordStorage, RecordStorageImpl},
     };
 
     use super::UsageIntervalRecordFile;
@@ -297,36 +299,44 @@ mod tests {
         usage
             .append_inner(vec![UsageRecordEntity {
                 window_name: "initial".into(),
-                process_name: "initial".into(),
+                process_path: Some("initial".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             }])
             .await?;
 
         usage
             .append_inner(vec![UsageRecordEntity {
                 window_name: "window".into(),
-                process_name: "process".into(),
+                process_path: Some("process".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(1),
                 afk: true,
+                app_identifier: None,
+                app_name: None,
             }])
             .await?;
 
         usage
             .append_inner(vec![UsageRecordEntity {
                 window_name: "third".into(),
-                process_name: "process".into(),
+                process_path: Some("process".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(2),
                 afk: true,
+                app_identifier: None,
+                app_name: None,
             }])
             .await?;
 
         usage
             .append_inner(vec![UsageRecordEntity {
                 window_name: "third".into(),
-                process_name: "process".into(),
+                process_path: Some("process".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(3),
                 afk: true,
+                app_identifier: None,
+                app_name: None,
             }])
             .await?;
 
@@ -341,20 +351,24 @@ mod tests {
     async fn test_appender_overwrite() -> Result<()> {
         let mut previous = serde_json::to_string(&UsageIntervalEntity {
             window_name: "initial".into(),
-            process_name: "initial".into(),
+            process_path: Some("initial".into()),
             start: Utc::now() - Duration::seconds(2),
             duration: Duration::seconds(1),
             afk: false,
+            app_identifier: None,
+            app_name: None,
         })?;
 
         previous.push('\n');
 
         previous += &serde_json::to_string(&UsageIntervalEntity {
             window_name: "window".into(),
-            process_name: "process".into(),
+            process_path: Some("process".into()),
             start: Utc::now() - Duration::seconds(2),
             duration: Duration::seconds(1),
             afk: true,
+            app_identifier: None,
+            app_name: None,
         })?;
         previous += "\n";
 
@@ -368,9 +382,11 @@ mod tests {
         usage
             .append_inner(vec![UsageRecordEntity {
                 window_name: "window".into(),
-                process_name: "process".into(),
+                process_path: Some("process".into()),
                 moment: Utc::now(),
                 afk: true,
+                app_identifier: None,
+                app_name: None,
             }])
             .await?;
 
@@ -385,19 +401,25 @@ mod tests {
     async fn test_record_storage_basic() -> Result<()> {
         let dir = tempdir()?;
         let storage = RecordStorageImpl::new(dir.path().to_owned())?;
-        let mut record_file = storage.create_or_append_record(TEST_START_DATE.date()).await?;
+        let mut record_file = storage
+            .create_or_append_record(TEST_START_DATE.date())
+            .await?;
         let records = [
             UsageRecordEntity {
                 window_name: "test".into(),
-                process_name: "test process".into(),
+                process_path: Some("test process".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
-                process_name: "test process 2".into(),
+                process_path: Some("test process 2".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
         ];
         record_file.append_inner(vec![records[0].clone()]).await?;
@@ -420,25 +442,33 @@ mod tests {
     async fn test_record_storage_appending() -> Result<()> {
         let dir = tempdir()?;
         let storage = RecordStorageImpl::new(dir.path().to_owned())?;
-        let mut record = storage.create_or_append_record(TEST_START_DATE.date()).await?;
+        let mut record = storage
+            .create_or_append_record(TEST_START_DATE.date())
+            .await?;
         let records = [
             UsageRecordEntity {
                 window_name: "test".into(),
-                process_name: "test process".into(),
+                process_path: Some("test process".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
-                process_name: "test process 2".into(),
+                process_path: Some("test process 2".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(1),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
-                process_name: "test process 2".into(),
+                process_path: Some("test process 2".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(2),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
         ];
         record.append_inner(vec![records[0].clone()]).await?;
@@ -463,21 +493,27 @@ mod tests {
         let records = [
             UsageRecordEntity {
                 window_name: "test".into(),
-                process_name: "test process".into(),
+                process_path: Some("test process".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
             UsageRecordEntity {
                 window_name: "test".into(),
-                process_name: "test process".into(),
+                process_path: Some("test process".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(1),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
-                process_name: "test process 2".into(),
+                process_path: Some("test process 2".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(5),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
         ];
         let values = collapse_records(None, records.clone());
@@ -501,17 +537,21 @@ mod tests {
     async fn test_record_collapsing_long_time_between_cutooff() -> Result<()> {
         let interval = UsageIntervalEntity {
             window_name: "test".into(),
-            process_name: "test process".into(),
+            process_path: Some("test process".into()),
             start: Utc.from_utc_datetime(&TEST_START_DATE),
             duration: Duration::seconds(10),
             afk: false,
+            app_identifier: None,
+            app_name: None,
         };
 
         let records = [UsageRecordEntity {
             window_name: "test".into(),
-            process_name: "test process".into(),
+            process_path: Some("test process".into()),
             moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(15),
             afk: false,
+            app_identifier: None,
+            app_name: None,
         }];
 
         let values = collapse_records(Some(interval.clone()), records.clone());
@@ -532,21 +572,27 @@ mod tests {
         let records = [
             UsageRecordEntity {
                 window_name: "previous".into(),
-                process_name: "previous process".into(),
+                process_path: Some("previous process".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
-                process_name: "test process 2".into(),
+                process_path: Some("test process 2".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(3),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
             UsageRecordEntity {
                 window_name: "test 2".into(),
-                process_name: "test process 2".into(),
+                process_path: Some("test process 2".into()),
                 moment: Utc.from_utc_datetime(&TEST_START_DATE) + Duration::seconds(4),
                 afk: false,
+                app_identifier: None,
+                app_name: None,
             },
         ];
         let values = collapse_records(None, records.clone());

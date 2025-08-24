@@ -8,14 +8,14 @@ use crate::{
 
 #[derive(Debug)]
 pub struct ProcessUsage {
-    pub process_name: Arc<str>,
+    pub app_identifier: Arc<str>,
     pub duration: Duration,
 }
 
 impl ProcessUsage {
-    fn new(process_name: Arc<str>) -> Self {
+    fn new(app_identifier: Arc<str>) -> Self {
         Self {
-            process_name,
+            app_identifier: app_identifier,
             duration: Duration::zero(),
         }
     }
@@ -23,15 +23,15 @@ impl ProcessUsage {
 
 #[derive(Debug)]
 pub struct WindowUsage {
-    pub process_name: Arc<str>,
+    pub app_identifier: Arc<str>,
     pub window_name: Arc<str>,
     pub duration: Duration,
 }
 
 impl WindowUsage {
-    pub fn new(process_name: Arc<str>, window_name: Arc<str>) -> Self {
+    pub fn new(app_identifier: Arc<str>, window_name: Arc<str>) -> Self {
         Self {
-            process_name,
+            app_identifier,
             window_name,
             duration: Duration::zero(),
         }
@@ -39,7 +39,7 @@ impl WindowUsage {
 }
 
 /// Returns vector of unique processes with their statistics + computer usage duration
-pub fn analyze_processes(
+pub fn analyze_apps(
     intervals: Vec<UsageIntervalEntity>,
     min_percentage: Percentage,
     include_afk: bool,
@@ -56,8 +56,8 @@ pub fn analyze_processes(
             inactive.duration += v.duration
         } else {
             let analysis = map
-                .entry(clean_process_name(&v.process_name))
-                .or_insert_with(|| ProcessUsage::new(v.process_name));
+                .entry(clean_process_name(&v.readable_name()))
+                .or_insert_with(|| ProcessUsage::new(v.readable_name().into()));
             analysis.duration += v.duration;
         }
     }
@@ -65,7 +65,7 @@ pub fn analyze_processes(
     let threshold = interval_sum * (*min_percentage as i32) / 100;
 
     if !inactive.duration.is_zero() {
-        map.insert(inactive.process_name.to_string(), inactive);
+        map.insert(inactive.app_identifier.to_string(), inactive);
     }
 
     let mut usages = map
@@ -96,8 +96,8 @@ pub fn analyze_windows(
             inactive.duration += v.duration
         } else {
             let analysis = map
-                .entry((clean_process_name(&v.process_name), v.window_name.clone()))
-                .or_insert_with(|| WindowUsage::new(v.process_name, v.window_name));
+                .entry((clean_process_name(&v.readable_name()), v.window_name.clone()))
+                .or_insert_with(|| WindowUsage::new(v.readable_name().into(), v.window_name.clone()));
             analysis.duration += v.duration;
         }
     }
@@ -105,7 +105,7 @@ pub fn analyze_windows(
     let threshold = interval_sum * (*min_percentage as i32) / 100;
 
     if !inactive.duration.is_zero() {
-        map.insert((inactive.process_name.to_string(), inactive.window_name.clone()), inactive);
+        map.insert((inactive.app_identifier.to_string(), inactive.window_name.clone()), inactive);
     }
 
     let mut usages = map
