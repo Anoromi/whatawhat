@@ -1,0 +1,3 @@
+[submodule "whatawhat-lib"]
+	path = whatawhat-lib
+	url = https://github.com/Anoromi/whatawhat-lib
