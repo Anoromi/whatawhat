@@ -1,119 +1,310 @@
-# Whatawhat
-A tool for monitoring activity on the computer throughout the day.
+Welcome to your new TanStack app! 
 
-https://github.com/user-attachments/assets/d0bbfadb-eacb-4889-91ba-b97ed6b63646
+# Getting Started
 
-- [Why would I want this?](#why-would-i-want-this)
-- [Introduction](#introducing-whatawhat)
-- [Installation](#installation)
-  - [Windows](#windows)
-  - [X11 Linux](#x11-linux)
-- [Usage](#usage)
-- [Examples](#examples)
-- [Autostart](#autostart)
-- [Notes](#notes)
-- [Future](#future)
+To run this application:
 
-## Why would I want this?
-- Because it's hard to remember what you've been doing 3 hours ago, let alone 1 week ago.
-- Because having no idea where your time goes will worsen your self-esteem.
-- Because knowing how much you spend on games might help you cope with addictions.
-
-
-
-## Introducing Whatawhat
-A simple cli/daemon for monitoring your activity.
-
-**No runtime required.** No python, no node. The application is a single executable that takes up 1MB during execution.
-
-**Cli friendly.** Very easy to use with tools like `grep` and `less`.
-
-**Everything is local.** You control your data. your data does not leave your computer, not used by advertisers, not leaked by corporations.
-
-## Installation
-
-### Windows
 ```bash
-cargo install -F win whatawhat
+pnpm install
+pnpm start
 ```
 
+# Building For Production
 
-### X11 Linux
-To compile and run the application you need xcb and xscreensaver.
-Some distros (like Manjaro) will have them preinstalled.
+To build this application for production:
 
-To get utilities on Ubuntu you can simply run:
 ```bash
-sudo apt-get install libxcb1-dev
-sudo apt-get install xscreensaver
+pnpm build
 ```
-Then use cargo install to build the program:
+
+## Testing
+
+This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+
 ```bash
-cargo install -F x11 whatawhat
+pnpm test
 ```
 
-## Usage
-When you're first starting out it's recommended to run `whatawhat restart`. This will start the daemon for the current session.
+## Styling
 
-Now you can use the `whatawhat timeline` to get different data about your activity.
+This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
-For details on how to run the deamon on boot refer to [Autostart](#autostart)
 
-## Examples
+## Linting & Formatting
 
-Get application usage for this week:
-```
-whatawhat timeline -d 1 -o days --start "last monday"
-```
 
-View the timeline for last 8 hours:
-```
-whatawhat timeline -d 30 -o minutes --start "8 hours ago"
+This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
+
+```bash
+pnpm lint
+pnpm format
+pnpm check
 ```
 
-**Whatawhat also works well with common cli utils like grep**
 
-View when you started and ended your day with head/tail (assuming you weren't working at night):
-```
-whatawhat timeline -d 1 -o minutes --start "yesterday" --end  "yesterday" --days | tail
-```
-*or*
-```
-whatawhat timeline -d 1 -o minutes --start "yesterday" --end  "yesterday" --days | head
+## Shadcn
+
+Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+
+```bash
+pnpx shadcn@latest add button
 ```
 
-View what YouTube videos you've been watching with grep:
+
+
+## Routing
+This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
+
+### Adding A Route
+
+To add a new route to your application just add another a new file in the `./src/routes` directory.
+
+TanStack will automatically generate the content of the route file for you.
+
+Now that you have two routes you can use a `Link` component to navigate between them.
+
+### Adding Links
+
+To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+
+```tsx
+import { Link } from "@tanstack/react-router";
 ```
-whatawhat timeline -d 1 -o minutes --start "today" --days | grep YouTube
+
+Then anywhere in your JSX you can use it like so:
+
+```tsx
+<Link to="/about">About</Link>
 ```
 
-## Autostart
+This will create a link that will navigate to the `/about` route.
 
-Whatawhat doesn't run startup by default. This needs to be configured yourself.
+More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
 
-For Windows you can refer to [this](https://www.howtogeek.com/208224/how-to-add-a-program-to-startup-in-windows/):
- - Create a shortcut to whatawhat-daemon.exe.
- - Put the shortcut into the startup folder.
- - The daemon will now autostart on boot.
+### Using A Layout
 
-On Linux it's best to use autostart utilities provided by Gnome, KDE Plasma, etc.:
- - Add a new process on startup.
- - Specify the full path to the daemon (Usually `/home/username/.cargo/bin/whatawhat-daemon`).
- - The daemon will now autostart on boot.
+In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
 
-## Notes
+Here is an example layout that includes a header:
 
-1. Dates are formatted using [chrono-english](https://github.com/stevedonovan/chrono-english). The supported formats are:
-    - Relative dates: "today", "yesterday", "last monday", "1 week/day/hour/minute ago".
-    - Normal dates "00:00 28/03/2025", "3pm 28/03/2025" or just "28/03/2025" (If you want to use different Us style dates add `--date-style us` flag).
-    - Combined: "10:00 1 week ago".
+```tsx
+import { Outlet, createRootRoute } from '@tanstack/react-router'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-1. By default `whatawhat timeline` will trim items which have less than 1% of the total time of usage. You can set `--percentage 0%` to change this.
+import { Link } from "@tanstack/react-router";
 
-1. If you want to go through entire days, you can use `--days` flag. For example if you want to get data for yesterday you can use `--start "yesterday" --end "yesterday" --days`. This will show data from start of "yesterday" to the end of "yesterday".
+export const Route = createRootRoute({
+  component: () => (
+    <>
+      <header>
+        <nav>
+          <Link to="/">Home</Link>
+          <Link to="/about">About</Link>
+        </nav>
+      </header>
+      <Outlet />
+      <TanStackRouterDevtools />
+    </>
+  ),
+})
+```
+
+The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
+
+More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
 
 
-## Future
-- **Add configuration files**. Things like date formatting, collection interval should probably be modifiable. Also, defaults for `whatawhat timeline` should be configurable.
-- **Colors**. Colors can be extracted from icons for applications and will make it easier to distinguish between items.
-- **More tests**. The application lacks in integration tests and units tests for some components.
+## Data Fetching
+
+There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
+
+For example:
+
+```tsx
+const peopleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/people",
+  loader: async () => {
+    const response = await fetch("https://swapi.dev/api/people");
+    return response.json() as Promise<{
+      results: {
+        name: string;
+      }[];
+    }>;
+  },
+  component: () => {
+    const data = peopleRoute.useLoaderData();
+    return (
+      <ul>
+        {data.results.map((person) => (
+          <li key={person.name}>{person.name}</li>
+        ))}
+      </ul>
+    );
+  },
+});
+```
+
+Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
+
+### React-Query
+
+React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
+
+First add your dependencies:
+
+```bash
+pnpm add @tanstack/react-query @tanstack/react-query-devtools
+```
+
+Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
+
+```tsx
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// ...
+
+const queryClient = new QueryClient();
+
+// ...
+
+if (!rootElement.innerHTML) {
+  const root = ReactDOM.createRoot(rootElement);
+
+  root.render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
+}
+```
+
+You can also add TanStack Query Devtools to the root route (optional).
+
+```tsx
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+const rootRoute = createRootRoute({
+  component: () => (
+    <>
+      <Outlet />
+      <ReactQueryDevtools buttonPosition="top-right" />
+      <TanStackRouterDevtools />
+    </>
+  ),
+});
+```
+
+Now you can use `useQuery` to fetch your data.
+
+```tsx
+import { useQuery } from "@tanstack/react-query";
+
+import "./App.css";
+
+function App() {
+  const { data } = useQuery({
+    queryKey: ["people"],
+    queryFn: () =>
+      fetch("https://swapi.dev/api/people")
+        .then((res) => res.json())
+        .then((data) => data.results as { name: string }[]),
+    initialData: [],
+  });
+
+  return (
+    <div>
+      <ul>
+        {data.map((person) => (
+          <li key={person.name}>{person.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
+```
+
+You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
+
+## State Management
+
+Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
+
+First you need to add TanStack Store as a dependency:
+
+```bash
+pnpm add @tanstack/store
+```
+
+Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
+
+```tsx
+import { useStore } from "@tanstack/react-store";
+import { Store } from "@tanstack/store";
+import "./App.css";
+
+const countStore = new Store(0);
+
+function App() {
+  const count = useStore(countStore);
+  return (
+    <div>
+      <button onClick={() => countStore.setState((n) => n + 1)}>
+        Increment - {count}
+      </button>
+    </div>
+  );
+}
+
+export default App;
+```
+
+One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
+
+Let's check this out by doubling the count using derived state.
+
+```tsx
+import { useStore } from "@tanstack/react-store";
+import { Store, Derived } from "@tanstack/store";
+import "./App.css";
+
+const countStore = new Store(0);
+
+const doubledStore = new Derived({
+  fn: () => countStore.state * 2,
+  deps: [countStore],
+});
+doubledStore.mount();
+
+function App() {
+  const count = useStore(countStore);
+  const doubledCount = useStore(doubledStore);
+
+  return (
+    <div>
+      <button onClick={() => countStore.setState((n) => n + 1)}>
+        Increment - {count}
+      </button>
+      <div>Doubled - {doubledCount}</div>
+    </div>
+  );
+}
+
+export default App;
+```
+
+We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
+
+Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
+
+You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
+
+# Demo files
+
+Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
+
+# Learn More
+
+You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
